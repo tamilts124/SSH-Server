@@ -31,7 +31,7 @@ def main():
     
     ngrok.set_auth_token(os.environ['NGROK_AUTHTOKEN'])
     tunnel =ngrok.connect(5901, 'tcp')
-    message =f'Ubundu Secure Shell SSH: {tunnel.public_url}'
+    message =f'Ubundu SSH: {tunnel.public_url}'
     send_Notify(infinitydb, 'Notifier', 'Secure-Shell-Ubuntu', 'Info-Normal', message)
 
     while os.popen('sudo netstat -tupln | grep ssh').read():
