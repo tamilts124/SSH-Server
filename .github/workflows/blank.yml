@@ -21,8 +21,22 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
       
+      - name: "Setting up Python"
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+      - env:
+          PASSWORD: ${{secrets.PASSWORD}}
       # Runs a set of commands using the runners shell
-      - name: Run a secure shell
+      - name: "Run a secure shell"
         run: |
-          apt install ssh
+          sudo useradd ${{secrets.USERNAME}}
+          sudo su ubuntu <<done1
+          sudo passwd <<done2
+          $PASSWORD
+          $PASSWORD
+          done2
+          done1
+          apt install ssh >/dev/null
+          pip install requests pyngrok bs4 >/dev/null
           python main.py
