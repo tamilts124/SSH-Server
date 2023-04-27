@@ -30,7 +30,7 @@ def main():
         return db.query(query)
     
     realtime =getreal_date()
-    realdelta =dt.timedelta(minutes=35)
+    realdelta =dt.timedelta(minutes=1)
     ngrok.set_auth_token(os.environ['NGROK_AUTHTOKEN'])
     tunnel =ngrok.connect(22, 'tcp')
     message =f'Ubundu SSH: {tunnel.public_url}'
@@ -38,7 +38,7 @@ def main():
 
     while os.popen('sudo netstat -tupln | grep ssh').read():
         if (realtime+realdelta).time().strftime('%H:%M')==getreal_date().time().strftime('%H:%M'):
-            tunnel.close()
+            ngrok.kill()
             realtime =getreal_date()
             tunnel =ngrok.connect(22, 'tcp')
             send_Notify(infinitydb, 'Notifier', 'Secure-Shell-Ubuntu', 'Info-Normal', F'Ubuntu SSH: {tunnel.public_url} (Reconnection)')
