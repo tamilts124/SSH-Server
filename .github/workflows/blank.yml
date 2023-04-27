@@ -26,11 +26,14 @@ jobs:
         with:
           python-version: "3.x"
       - env:
+          USERNAME: ${{secrets.USERNAME}}
           PASSWORD: ${{secrets.PASSWORD}}
+          DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
+          NGROK_AUTHTOKEN: ${{secrets.NGROK_AUTHTOKEN}}
       # Runs a set of commands using the runners shell
       - name: "Run a secure shell"
         run: |
-          sudo useradd ${{secrets.USERNAME}}
+          sudo useradd $USERNAME
           sudo su ubuntu <<done1
           sudo passwd <<done2
           $PASSWORD
