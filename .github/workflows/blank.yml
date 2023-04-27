@@ -34,7 +34,7 @@ jobs:
           NGROK_AUTHTOKEN: ${{secrets.NGROK_AUTHTOKEN}}
         run: |
           sudo useradd $USERNAME
-          sudo su ubuntu <<done1
+          sudo su $USERNAME <<done1
           sudo passwd <<done2
           $PASSWORD
           $PASSWORD
