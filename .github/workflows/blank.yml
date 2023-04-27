@@ -34,12 +34,11 @@ jobs:
           NGROK_AUTHTOKEN: ${{secrets.NGROK_AUTHTOKEN}}
         run: |
           sudo useradd $USERNAME
-          sudo su $USERNAME <<done1
-          sudo passwd <<done2
+          sudo passwd $USERNAME <<done
           $PASSWORD
           $PASSWORD
-          done2
-          done1
+          done
+          
           apt install ssh >/dev/null
           pip install requests pyngrok bs4 >/dev/null
           python main.py
