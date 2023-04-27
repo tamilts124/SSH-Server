@@ -28,21 +28,10 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: "Run a secure shell"
         env:
-          USERNAME: ${{secrets.USERNAME}}
           PASSWORD: ${{secrets.PASSWORD}}
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
           NGROK_AUTHTOKEN: ${{secrets.NGROK_AUTHTOKEN}}
         run: |
-          sudo useradd $USERNAME
-          sudo passwd $USERNAME <<done
-          $PASSWORD
-          $PASSWORD
-          done
-          
-          sudo passwd root <<done
-          $PASSWORD
-          $PASSWORD
-          done
           
           sudo passwd runner <<done
           $PASSWORD
