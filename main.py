@@ -30,7 +30,7 @@ def main():
         return db.query(query)
     
     ngrok.set_auth_token(os.environ['NGROK_AUTHTOKEN'])
-    tunnel =ngrok.connect(5901, 'tcp')
+    tunnel =ngrok.connect(22, 'tcp')
     message =f'Ubundu SSH: {tunnel.public_url}'
     send_Notify(infinitydb, 'Notifier', 'Secure-Shell-Ubuntu', 'Info-Normal', message)
 
