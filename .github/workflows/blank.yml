@@ -41,4 +41,5 @@ jobs:
           
           apt install ssh >/dev/null
           pip install requests pyngrok bs4 >/dev/null
+          sudo service ssh start
           python main.py
