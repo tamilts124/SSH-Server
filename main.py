@@ -30,7 +30,7 @@ def main():
         return db.query(query)
     
     realtime =getreal_date()
-    realdelta =dt.timedelta(minutes=1)
+    realdelta =dt.timedelta(minutes=35)
     ngrok.set_auth_token(os.environ['NGROK_AUTHTOKEN'])
     tunnel =ngrok.connect(22, 'tcp')
     message =f'Ubundu SSH: {tunnel.public_url}'
