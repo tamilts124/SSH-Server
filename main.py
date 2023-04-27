@@ -29,12 +29,19 @@ def main():
         else: query =f'insert into {notify_table} (Place, Level, NewDate, NewTime, Info) values ("{Place}", "{Level}", "{date.strftime(r"%Y-%m-%d")}", "{time.strftime("%H:%M %p")}", "{Info}")'
         return db.query(query)
     
+    realtime =getreal_date()
+    realdelta =dt.timedelta(minutes=5)
     ngrok.set_auth_token(os.environ['NGROK_AUTHTOKEN'])
     tunnel =ngrok.connect(22, 'tcp')
     message =f'Ubundu SSH: {tunnel.public_url}'
     send_Notify(infinitydb, 'Notifier', 'Secure-Shell-Ubuntu', 'Info-Normal', message)
 
     while os.popen('sudo netstat -tupln | grep ssh').read():
+        if realtime+realdelta==getreal_date():
+            tunnel.close()
+            realtime =getreal_date()
+            tunnel =ngrok.connect(22, 'tcp')
+            send_Notify(infinitydb, 'Notifier', 'Secure-Shell-Ubuntu', 'Info-Normal', F'Ubuntu SSH: {tunnel.public_url} (Reconnection)')
         sleep(5)
 
 if __name__ == '__main__':
