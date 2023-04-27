@@ -37,7 +37,7 @@ def main():
     send_Notify(infinitydb, 'Notifier', 'Secure-Shell-Ubuntu', 'Info-Normal', message)
 
     while os.popen('sudo netstat -tupln | grep ssh').read():
-        if realtime+realdelta==getreal_date():
+        if (realtime+realdelta).time().strftime('%H:%M')==getreal_date().time().strftime('%H:%M'):
             tunnel.close()
             realtime =getreal_date()
             tunnel =ngrok.connect(22, 'tcp')
