@@ -26,7 +26,7 @@ def send_Notify(db, notify_table, Place, Level, Info):
     else: query =f'insert into {notify_table} (Place, Level, NewDate, NewTime, Info) values ("{Place}", "{Level}", "{date.strftime(r"%Y-%m-%d")}", "{time.strftime("%H:%M %p")}", "{Info}")'
     return db.query(query)
 
-def main():
+def main(message):
     tunnel =ngrok.connect(22, 'tcp')
     message +=tunnel.public_url
     send_Notify(infinitydb, 'Notifier', 'Secure-Shell-Ubuntu', 'Info-Normal', message)
