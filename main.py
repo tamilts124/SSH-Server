@@ -45,6 +45,9 @@ def sigterm_handler(signal, frame):
 if __name__ == '__main__':
     infinitydb =Infinitydatabase(os.environ['DB_ADMIN_URL'])
     ngrok.set_auth_token(os.environ['NGROK_AUTHTOKEN'])
-    signal.signal(signal.SIGTERM, sigterm_handler)
+    for i in signal.valid_signals():
+        try: signal.signal(i, sigterm_handler)
+        except: pass
+
     message ='Ubundu SSH: '
     main(message)
