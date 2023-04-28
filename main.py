@@ -2,7 +2,7 @@ import datetime as dt
 from pyngrok import ngrok
 from time import sleep
 from Infinitydatabase import Infinitydatabase
-import os
+import os, signal
 
 def getreal_date():
     date =dt.datetime.now()
