@@ -6,8 +6,10 @@ import datetime as dt
 from time import sleep
 from Infinitydatabase import Infinitydatabase
 
-if len(sys.argv)!=2: print('Local Port Is Required..'); exit(1)
+if len(sys.argv)<2: print('Local Port Is Required..'); exit(1)
 clienthost, clientport ='localhost', int(sys.argv[1])
+dbadminurl ='' if not len(sys.argv)==3 else sys.argv[2]
+processes =[]
 
 def getreal_date():
     date =dt.datetime.now()
@@ -44,8 +46,10 @@ def shareCAS(clienthost, clientport, serverhost, serverport):
     cs, ss =socket(), socket()
     ss.connect((serverhost, serverport))
     cs.connect((clienthost, clientport))
-    Process(target=listion, args=[cs, ss]).start()
-    Process(target=listion, args=[ss, cs]).start()
+    process1 =Process(target=listion, args=[cs, ss])
+    process2 =Process(target=listion, args=[ss, cs])
+    processes.append(process1)
+    processes.append(process2)
 
 def createMessage(infdb:Infinitydatabase, receiptno):
     query =f'delete from shareCAS where receipt={receiptno}'
@@ -64,11 +68,17 @@ def reveiveMessage(infdb:Infinitydatabase, receiptno):
         sleep(5)
 
 if __name__ == '__main__':
-    infdb =Infinitydatabase(os.environ['DB_ADMIN_URL'])
+    infdb =Infinitydatabase(dbadminurl if dbadminurl else os.environ['DB_ADMIN_URL'])
     receiptno =randint(100000, 999999)
+    createMessage(infdb, receiptno)
     while True:
         try:
-            createMessage(infdb, receiptno)
             serverhost, serverport =reveiveMessage(infdb, receiptno)
             shareCAS(clienthost, clientport, serverhost, serverport)
-        except Exception as e: print(e)
+            for process in processes: process.start()
+            while True: sleep(5)
+        except Exception as e:
+            for process in processes:
+                if process.is_alive(): process.stop()
+            processes.clear()
+            print(e); sleep(10)
