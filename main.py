@@ -7,7 +7,6 @@ from time import sleep
 from Infinitydatabase import Infinitydatabase
 
 timeout =1296000
-process1, process2 =None, None
 
 if len(sys.argv)<2: print('Local Port Is Required..'); exit(1)
 clienthost, clientport ='localhost', int(sys.argv[1])
@@ -39,14 +38,12 @@ def listion(cs:socket, conn:socket):
     while True:
         try:
             data =conn.recv(1024)
-            if data.decode()=='tErmInaTe conNectIoN': terminate()
             if data: cs.sendall(data)
         except Exception as e:
             send_Notify(infdb, 'Notifier', 'CS-Internediator', 'Error-Unknown', str(e))
             print(e); break
 
 def shareCAS(clienthost, clientport, serverhost, serverport):
-    global process1, process2
     cs, ss =socket(), socket()
     ss.connect((serverhost, serverport))
     cs.connect((clienthost, clientport))
@@ -59,7 +56,7 @@ def shareCAS(clienthost, clientport, serverhost, serverport):
 def createMessage(infdb:Infinitydatabase, receiptno):
     query =f'delete from shareCAS where receipt={receiptno}'
     infdb.query(query)
-    message =f'shareCAS Waiting For Response Through The Receipt NO: {receiptno}'
+    message =f'shareCAS Waiting For Response Through The Receipt NO (SSH-Ubuntu): {receiptno}'
     send_Notify(infdb, 'Notifier', 'CS-Internediator', 'Info-High', message)
 
 def reveiveMessage(infdb:Infinitydatabase, receiptno):
@@ -69,12 +66,10 @@ def reveiveMessage(infdb:Infinitydatabase, receiptno):
         if table and table.get('row'):
             host, port =table['row'][0]
             port =int(port)
+            query =f'delete from shareCAS where receipt={receiptno}'
+            infdb.query(query)
             return host, port
         sleep(5)
-
-def terminate():
-    if process1.is_alive(): process1.kill()
-    if process2.is_alive(): process2.kill()
 
 if __name__ == '__main__':
     infdb =Infinitydatabase(dbadminurl if dbadminurl else os.environ['DB_ADMIN_URL'])
@@ -85,10 +80,5 @@ if __name__ == '__main__':
             serverhost, serverport =reveiveMessage(infdb, receiptno)
             process1, process2 =shareCAS(clienthost, clientport, serverhost, serverport)
             process1.start(); process2.start()
-            while True:
-                if not process1.is_alive() or not process2.is_alive():
-                    terminate(); break
-                sleep(10)
         except Exception as e:
-            terminate()
             print(e); sleep(10)
