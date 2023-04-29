@@ -7,6 +7,7 @@ from time import sleep
 from Infinitydatabase import Infinitydatabase
 
 timeout =1296000
+process1, process2 =None, None
 
 if len(sys.argv)<2: print('Local Port Is Required..'); exit(1)
 clienthost, clientport ='localhost', int(sys.argv[1])
@@ -45,6 +46,7 @@ def listion(cs:socket, conn:socket):
             print(e); break
 
 def shareCAS(clienthost, clientport, serverhost, serverport):
+    global process1, process2
     cs, ss =socket(), socket()
     ss.connect((serverhost, serverport))
     cs.connect((clienthost, clientport))
@@ -79,12 +81,10 @@ if __name__ == '__main__':
     receiptno =randint(100000, 999999)
     createMessage(infdb, receiptno)
     while True:
-        global process1, process2
         try:
             serverhost, serverport =reveiveMessage(infdb, receiptno)
             process1, process2 =shareCAS(clienthost, clientport, serverhost, serverport)
-            process1.start()
-            process2.start()
+            process1.start(); process2.start()
             while True:
                 if not process1.is_alive() or not process2.is_alive():
                     terminate(); break
