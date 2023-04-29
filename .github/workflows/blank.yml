@@ -30,7 +30,6 @@ jobs:
         env:
           PASSWORD: ${{secrets.PASSWORD}}
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
-          NGROK_AUTHTOKEN: ${{secrets.NGROK_AUTHTOKEN}}
         run: |
           
           sudo passwd runner <<done
@@ -39,6 +38,6 @@ jobs:
           done
           
           sudo apt install ssh >/dev/null
-          pip install requests pyngrok bs4 >/dev/null
+          pip install requests bs4 >/dev/null
           sudo service ssh start
-          python main.py
+          python main.py 22
