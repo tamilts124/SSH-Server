@@ -57,8 +57,8 @@ def reveiveMessage(infdb:Infinitydatabase, receiptno):
     query =f'select host, port from shareCAS where receipt={receiptno}'
     while True:
         table =infdb.query(query)
-        if table and table['row']:
-            host, port =table.row[0][1:]
+        if table and table.get('row'):
+            host, port =table['row'][0]
             port =int(port)
             return host, port
         sleep(5)
