@@ -45,6 +45,8 @@ def shareCAS(clienthost, clientport, serverhost, serverport):
     cs, ss =socket(), socket()
     ss.connect((serverhost, serverport))
     cs.connect((clienthost, clientport))
+    ss.settimeout(60.0)
+    cs.settimeout(60.0)
     process1 =Process(target=listion, args=[cs, ss])
     process2 =Process(target=listion, args=[ss, cs])
     return process1, process2
@@ -52,7 +54,7 @@ def shareCAS(clienthost, clientport, serverhost, serverport):
 def createMessage(infdb:Infinitydatabase, receiptno):
     query =f'delete from shareCAS where receipt={receiptno}'
     infdb.query(query)
-    message =f'shareCAS Waiting For Response Through The Receipt NO: {receiptno}'
+    message =f'shareCAS Waiting For Response Through The Receipt NO (SSH-Ubuntu): {receiptno}'
     send_Notify(infdb, 'Notifier', 'CS-Internediator', 'Info-High', message)
 
 def reveiveMessage(infdb:Infinitydatabase, receiptno):
