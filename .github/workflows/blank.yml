@@ -29,7 +29,8 @@ jobs:
           PASSWORD: ${{secrets.PASSWORD}}
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |
-          
+          sudo apt update >/dev/null
+
           sudo passwd runner <<done
           $PASSWORD
           $PASSWORD
