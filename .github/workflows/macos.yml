@@ -33,6 +33,7 @@ jobs:
         run: |
           brew update
           brew install openssh
+          pip install bs4 requests
       - name: Running a SSH Server
         run: |
           sudo launchctl start com.openssh.sshd
