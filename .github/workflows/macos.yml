@@ -40,5 +40,4 @@ jobs:
           PASSWORD: ${{secrets.PASSWORD}}
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |          
-          sudo lsof -i -P -n -x +d /usr
           sudo python main.py 22
