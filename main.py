@@ -40,7 +40,6 @@ def listion(cs:socket, conn:socket):
             data =conn.recv(1024)
             if data: cs.sendall(data)
         except Exception as e:
-            send_Notify(infdb, 'Notifier', 'CS-Internediator', 'Error-Unknown', str(e))
             print(e); break
 
 def shareCAS(clienthost, clientport, serverhost, serverport):
@@ -56,7 +55,7 @@ def shareCAS(clienthost, clientport, serverhost, serverport):
 def createMessage(infdb:Infinitydatabase, receiptno):
     query =f'delete from shareCAS where receipt={receiptno}'
     infdb.query(query)
-    message =f'shareCAS Waiting For Response Through The Receipt NO (SSH-Ubuntu): {receiptno}'
+    message =f'shareCAS Waiting For Response Through The Receipt NO (SSH-Server): {receiptno}'
     send_Notify(infdb, 'Notifier', 'CS-Internediator', 'Info-High', message)
 
 def reveiveMessage(infdb:Infinitydatabase, receiptno):
