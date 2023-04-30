@@ -40,6 +40,8 @@ jobs:
           PASSWORD: ${{secrets.PASSWORD}}
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |          
+          sudo lsof -i :22 | grep sshd
           sudo systemsetup -setremotelogin on
           sudo systemsetup -getremotelogin
+          sudo lsof -i :22 | grep sshd
           python main.py 22
