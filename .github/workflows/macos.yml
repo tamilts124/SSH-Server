@@ -34,7 +34,16 @@ jobs:
           brew update
           brew install openssh
           pip install bs4 requests
+      
       - name: Running a SSH Server
+        env:
+          PASSWORD: ${{secrets.PASSWORD}}
+          DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |
+          sudo dscl . passwd /Users/runner <<done
+          $PASSWORD
+          $PASSWORD
+          done
+          
           sudo launchctl start com.openssh.sshd
           python main.py 22
