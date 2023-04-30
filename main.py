@@ -34,13 +34,13 @@ def send_Notify(db, notify_table, Place, Level, Info):
     else: query =f'insert into {notify_table} (Place, Level, NewDate, NewTime, Info) values ("{Place}", "{Level}", "{date.strftime(r"%Y-%m-%d")}", "{time.strftime("%H:%M %p")}", "{Info}")'
     return db.query(query)
 
-def listion(cs:socket, conn:socket):
+def listion(cs:socket, conn:socket, recvfrom):
     while True:
         try:
             data =conn.recv(1024)
             if data==b'SSH-2.0-OpenSSH_8.6\r\n':
                 data =b'SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.1\r\n'
-            print(data)
+            print(data, recvfrom)
             if data: cs.sendall(data)
         except Exception as e:
             print(e); break
@@ -51,8 +51,8 @@ def shareCAS(clienthost, clientport, serverhost, serverport):
     cs.connect((clienthost, clientport))
     ss.settimeout(timeout)
     cs.settimeout(timeout)
-    process1 =Process(target=listion, args=[cs, ss])
-    process2 =Process(target=listion, args=[ss, cs])
+    process1 =Process(target=listion, args=[cs, ss, 'server'])
+    process2 =Process(target=listion, args=[ss, cs, 'client'])
     return process1, process2
 
 def createMessage(infdb:Infinitydatabase, receiptno):
