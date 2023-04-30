@@ -38,8 +38,6 @@ def listion(cs:socket, conn:socket, recvfrom):
     while True:
         try:
             data =conn.recv(1024)
-            if data==b'SSH-2.0-OpenSSH_8.6\r\n':
-                data =b'SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.1\r\n'
             print(data, recvfrom)
             if data: cs.sendall(data)
         except Exception as e:
