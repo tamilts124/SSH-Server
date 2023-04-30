@@ -33,6 +33,7 @@ jobs:
         run: |
           #brew update
           brew install openssh
+          brew install coreutils
           pip install bs4 requests
       
       - name: Running a SSH Server
@@ -40,5 +41,4 @@ jobs:
           PASSWORD: ${{secrets.PASSWORD}}
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |          
-          python --version
-          sudo python main.py 22 "$DB_ADMIN_URL"
+          gtimeout 10 python main.py 22
