@@ -24,12 +24,6 @@ jobs:
         with:
           python-version: "3.x"
       
-      # Runs a set of commands using the runners shell
-      - name: Run a secure shell
-        env:
-          PASSWORD: ${{secrets.PASSWORD}}
-          DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
-      
       - name: Installing Dependancies
         run: |
           sudo apt update
@@ -37,6 +31,9 @@ jobs:
           pip install requests bs4
       
       - name: Running a SSH Server
+        env:
+          PASSWORD: ${{secrets.PASSWORD}}
+          DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |
           sudo passwd runner <<done
           $PASSWORD
