@@ -31,8 +31,8 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Installing Dependencies
         run: |
-          #brew update
-          #brew install openssh
+          brew update
+          brew install openssh
           pip install bs4 requests
       
       - name: Running a SSH Server
