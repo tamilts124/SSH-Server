@@ -40,4 +40,9 @@ jobs:
           PASSWORD: ${{secrets.PASSWORD}}
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |          
+          sudo echo 'Host *' >>/etc/ssh/sshd_config
+          sudo echo '    StrictHostKeyChecking no' >>/etc/ssh/sshd_config
+          sudo echo '     UserKnownHostsFile=/dev/null' >>/etc/ssh/sshd_config          
+          sudo launchctl stop com.openssh.sshd
+          sudo launchctl start com.openssh.sshd
           python main.py 22
