@@ -40,10 +40,10 @@ jobs:
           PASSWORD: ${{secrets.PASSWORD}}
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |
-          sudo dscl . passwd /Users/runner <<done
+          dscl . passwd /Users/runner <<done
           $PASSWORD
           $PASSWORD
           done
           
-          sudo launchctl start com.openssh.sshd
+          launchctl start com.openssh.sshd
           python main.py 22
