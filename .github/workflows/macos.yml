@@ -23,12 +23,17 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
 
+      - name: Setting up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
       # Runs a set of commands using the runners shell
-      - name: Installing Dependancies
+      - name: Installing Dependencies
         run: |
           brew update
           brew install openssh
-      - name: Run a SSH Server
+      - name: Running a SSH Server
         run: |
           sudo launchctl start com.openssh.sshd
           python main.py 22
