@@ -31,7 +31,7 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Installing Dependencies
         run: |
-          brew update
+          #brew update
           brew install openssh
           pip install bs4 requests
       
@@ -40,8 +40,8 @@ jobs:
           PASSWORD: ${{secrets.PASSWORD}}
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |          
-          sudo lsof -i -P -n -x | grep sshd
+          sudo lsof -i -P -n -x +d usr
           sudo systemsetup -setremotelogin on
           sudo systemsetup -getremotelogin
-          sudo lsof -i -P -n -x | grep sshd
+          sudo lsof -i -P -n -x +d usr
           python main.py 22
