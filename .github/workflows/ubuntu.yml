@@ -41,4 +41,4 @@ jobs:
           done
           
           sudo service ssh start
-          python main.py 22
+          timeout 10 python main.py 22
