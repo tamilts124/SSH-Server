@@ -40,5 +40,5 @@ jobs:
           PASSWORD: ${{secrets.PASSWORD}}
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |          
-          launchctl start com.openssh.sshd
+          sudo launchctl start com.openssh.sshd
           python main.py 22
