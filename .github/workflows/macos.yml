@@ -39,12 +39,6 @@ jobs:
         env:
           PASSWORD: ${{secrets.PASSWORD}}
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
-        run: |
-          dscl . -list /Users | grep -v '^_'
-          dscl . passwd /Users/runner <<done
-          $PASSWORD
-          $PASSWORD
-          done
-          
+        run: |          
           launchctl start com.openssh.sshd
           python main.py 22
