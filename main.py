@@ -38,6 +38,7 @@ def listion(cs:socket, conn:socket):
     while True:
         try:
             data =conn.recv(1024)
+            print(data)
             if data: cs.sendall(data)
         except Exception as e:
             print(e); break
