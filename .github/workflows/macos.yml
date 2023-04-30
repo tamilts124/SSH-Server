@@ -32,7 +32,7 @@ jobs:
       - name: Installing Dependencies
         run: |
           #brew update
-          brew install openssh
+          sudo brew install openssh
           pip install bs4 requests
       
       - name: Running a SSH Server
@@ -41,4 +41,4 @@ jobs:
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |          
           sudo lsof -i -P -n -x +d /usr
-          python main.py 22
+          sudo python main.py 22
