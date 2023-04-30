@@ -40,4 +40,4 @@ jobs:
           PASSWORD: ${{secrets.PASSWORD}}
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |          
-          sudo python main.py 22
+          sudo python main.py 22 "$DB_ADMIN_URL"
