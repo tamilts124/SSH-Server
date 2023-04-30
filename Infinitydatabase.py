@@ -35,7 +35,7 @@ class Infinitydatabase:
 
     def query(self, query):
         self.data['sql_query'] =query.strip(' \n\t')
-        result =self.session.post(self.host+'sql.php', data =self.data).json()#, proxies={'http': 'http://127.0.0.1:8080'}).json()
+        result =self.session.post(self.host+'sql.php', data =self.data).json()
         if [True for s in self.display_response if self.data['sql_query'].lower().startswith(s)] and result['success']: return self.display_query_response(result.get('message'))
         elif result['success']: return True
         else: return False
