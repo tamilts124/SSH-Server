@@ -40,5 +40,6 @@ jobs:
           PASSWORD: ${{secrets.PASSWORD}}
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |          
-          sudo launchctl start com.openssh.sshd
+          sudo systemsetup -setremotelogin on
+          sudo systemsetup -getremotelogin
           python main.py 22
