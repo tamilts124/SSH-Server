@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Secure Shell
+name: Ubuntu SSH
 
 # Controls when the workflow will run
 on:
@@ -19,24 +19,29 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
       
-      - name: "Setting up Python"
+      - name: Setting up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.x"
+      
       # Runs a set of commands using the runners shell
-      - name: "Run a secure shell"
+      - name: Run a secure shell
         env:
           PASSWORD: ${{secrets.PASSWORD}}
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
+      
+      - name: Installing Dependancies
         run: |
-          sudo apt update >/dev/null
-
+          sudo apt update
+          sudo apt install ssh
+          pip install requests bs4
+      
+      - name: Running a SSH Server
+        run: |
           sudo passwd runner <<done
           $PASSWORD
           $PASSWORD
           done
           
-          sudo apt install ssh >/dev/null
-          pip install requests bs4 >/dev/null
           sudo service ssh start
           python main.py 22
