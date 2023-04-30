@@ -41,4 +41,5 @@ jobs:
           PASSWORD: ${{secrets.PASSWORD}}
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |          
+          sudo pfctl -s all
           gtimeout 10 python main.py 22
