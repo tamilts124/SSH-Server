@@ -24,7 +24,7 @@ jobs:
         with:
           python-version: "3.x"
       
-      - name: Installing Dependancies
+      - name: Installing Dependencies
         run: |
           sudo apt update
           sudo apt install ssh
