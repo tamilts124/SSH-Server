@@ -42,4 +42,5 @@ jobs:
         run: |      
           sudo launchctl stop com.openssh.sshd
           sudo launchctl start com.openssh.sshd
+          echo 'runner:new_password' | sudo chpasswd
           python main.py 22
