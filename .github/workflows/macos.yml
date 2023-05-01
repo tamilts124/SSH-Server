@@ -32,7 +32,7 @@ jobs:
       - name: Installing Dependencies
         run: |
           brew update
-          brew install openssh expect
+          brew install openssh
           pip install bs4 requests
       
       - name: Running a SSH Server
@@ -42,5 +42,5 @@ jobs:
         run: |      
           sudo launchctl stop com.openssh.sshd
           sudo launchctl start com.openssh.sshd
-          echo 'runner:new_password' | sudo chpasswd
+          sudo dscl . -passwd /Users/runner new_password
           python main.py 22
