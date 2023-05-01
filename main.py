@@ -37,8 +37,7 @@ def send_Notify(db, notify_table, Place, Level, Info):
 def listion(cs:socket, conn:socket):
     while True:
         try:
-            data =conn.recv(1024)
-            cs.sendall(data)
+            cs.sendall(conn.recv(1024))
         except Exception as e:
             print(e); break
 
