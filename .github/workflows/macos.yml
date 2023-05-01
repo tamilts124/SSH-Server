@@ -32,7 +32,7 @@ jobs:
       - name: Installing Dependencies
         run: |
           brew update
-          brew install openssh
+          brew install openssh expect
           pip install bs4 requests
       
       - name: Running a SSH Server
