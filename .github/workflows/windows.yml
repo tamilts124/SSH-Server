@@ -27,5 +27,6 @@ jobs:
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
       run: |
         cd 'C:\Program Files\OpenSSH-Win64'
-        .\ssh
+        .\sshd.exe
+        cd %userprofile%
         python main.py 5900
