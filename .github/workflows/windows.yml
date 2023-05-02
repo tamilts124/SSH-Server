@@ -22,11 +22,12 @@ jobs:
         choco install openssh
         pip install bs4 requests
 
-    - name: Running VNC Sever
+    - name: Running SSH Sever
       env:
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
       run: |
         cd 'C:\Program Files\OpenSSH-Win64'
         .\sshd.exe
-        cd %userprofile%
-        python main.py 5900
+        mkdir etc/ssh
+        copy "C:\ProgramData\ssh\sshd_config" "etc\ssh\sshd_config"
+        
