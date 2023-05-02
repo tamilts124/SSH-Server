@@ -28,6 +28,7 @@ jobs:
       run: |
         cd 'C:\Program Files\OpenSSH-Win64'
         ls
-        copy "sshd_config" "C:\ProgramData\ssh\sshd_config"
-        .\sshd.exe
+        Copy-Item "C:\ProgramData\ssh\sshd_config_default" "C:\ProgramData\ssh\sshd_config"
+        Start-Service sshd
+
         
