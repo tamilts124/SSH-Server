@@ -27,7 +27,7 @@ jobs:
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
       run: |
         cd 'C:\Program Files\OpenSSH-Win64'
+        ls
+        copy "sshd_config" "C:\ProgramData\ssh\sshd_config"
         .\sshd.exe
-        mkdir etc/ssh
-        copy "C:\ProgramData\ssh\sshd_config" "etc\ssh\sshd_config"
         
