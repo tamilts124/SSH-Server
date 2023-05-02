@@ -1,0 +1,31 @@
+name: Windows SSH
+
+on:
+  
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setting up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.x"
+    
+    - name: Installing Dependencies
+      run: |
+        choco install openssh
+        pip install bs4 requests
+
+    - name: Running VNC Sever
+      env:
+          DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
+      run: |
+        cd 'C:\Program Files\OpenSSH-Win64'
+        .\ssh
+        python main.py 5900
