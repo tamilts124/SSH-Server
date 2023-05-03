@@ -28,7 +28,7 @@ jobs:
       run: |
         ls
         Copy-Item "C:\Program Files\OpenSSH-Win64\sshd_config_default" "C:\ProgramData\ssh\sshd_config"
-        echo a | & 'C:\Program Files\OpenSSH-Win64\ssh-keygen.exe'
+        echo ' ' | & 'C:\Program Files\OpenSSH-Win64\ssh-keygen.exe' -N '  '
         Start-Job -ScriptBlock { & 'C:\Program Files\OpenSSH-Win64\sshd.exe' }
         python main.py 22
         
