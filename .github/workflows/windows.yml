@@ -24,4 +24,4 @@ jobs:
       env:
         DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
       run: |
-       type 'C:\creds\runneradmin.txt'
+       ls C:\
