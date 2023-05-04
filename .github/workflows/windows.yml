@@ -19,9 +19,16 @@ jobs:
     
     - name: Installing Dependencies
       run: |
-
+        choco install openssh
+        pip install bs4 requests
     - name: Running SSH Sever
       env:
-          DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
+        DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
       run: |
-        net user
+        net user runneradmin ${{secrets.PASSWORD}}
+        Copy-Item "C:\Program Files\OpenSSH-Win64\sshd_config_default" "C:\ProgramData\ssh\sshd_config"
+        & 'C:\Program Files\OpenSSH-Win64\install-sshd.ps1'
+        echo '' | & 'C:\Program Files\OpenSSH-Win64\ssh-keygen.exe' -N ' '
+        & 'C:\Program Files\OpenSSH-Win64\ssh-keygen.exe' -A
+        Start-Job -ScriptBlock { & 'C:\Program Files\OpenSSH-Win64\sshd.exe' }
+        python main.py 22
