@@ -27,10 +27,7 @@ jobs:
         DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
       run: |
         net user runneradmin ${{secrets.PASSWORD}}
-        Copy-Item "C:\Program Files\OpenSSH-Win64\sshd_config_default" "C:\ProgramData\ssh\sshd_config"
         & 'C:\Program Files\OpenSSH-Win64\install-sshd.ps1'
-        echo '' | & 'C:\Program Files\OpenSSH-Win64\ssh-keygen.exe' -N ' '
-        & 'C:\Program Files\OpenSSH-Win64\ssh-keygen.exe' -A
         & 'C:\Program Files\OpenSSH-Win64\Set-SSHDefaultShell.ps1' 'C:\Windows\System32\cmd.exe'
-        Start-Job -ScriptBlock { & 'C:\Program Files\OpenSSH-Win64\sshd.exe' }
+        net start sshd
         python main.py 22
