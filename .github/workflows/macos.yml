@@ -40,7 +40,8 @@ jobs:
           PASSWORD: ${{secrets.PASSWORD}}
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |    
-          sudo dscl . -delete /Users/runner
+          sudo dscl . -delete /Local/Default/Users/runner
+          #sudo dscl . -delete /Users/runner
           sudo dscl . -create /Users/runner
           sudo dscl . -create /Users/runner RealName "SSH Runner"
           sudo dscl . -passwd /Users/runner PASSWORD
