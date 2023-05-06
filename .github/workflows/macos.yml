@@ -40,14 +40,20 @@ jobs:
           PASSWORD: ${{secrets.PASSWORD}}
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |    
-          sudo dscl . -create /Groups/sshusers
-          sudo dscl . -create /Groups/sshusers GroupMembership SSH
+          # Create a new user account
           sudo dscl . -create /Users/SSH UniqueID 501
           sudo dscl . -create /Users/SSH UserShell /bin/bash
           sudo dscl . -create /Users/SSH RealName "SSH User"
-          sudo dscl . -create /Users/SSH PrimaryGroupID 1000
+          sudo dscl . -create /Users/SSH PrimaryGroupID 20
           sudo dscl . -create /Users/SSH NFSHomeDirectory /Users/SSH
           sudo dscl . -passwd /Users/SSH password
+
+          # Verify that the user account was created
+          sudo dscl . -read /Users/SSH
+
+          # Add the user to an existing group
+          sudo dscl . -append /Groups/sshsuders GroupMembership SSH
+
 
           sudo dseditgroup -o edit -a SSH -t user sudo
           #sudo launchctl stop com.openssh.sshd
