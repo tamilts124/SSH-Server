@@ -40,7 +40,10 @@ jobs:
           PASSWORD: ${{secrets.PASSWORD}}
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |    
-          whoami
+          sudo dscl . -delete /Users/runner
+          sudo dscl . -create /Users/runner
+          sudo dscl . -create /Users/runner RealName "SSH Runner"
+          sudo dscl . -passwd /Users/runner PASSWORD
           #sudo launchctl stop com.openssh.sshd
           #sudo launchctl start com.openssh.sshd
           #python main.py 22
