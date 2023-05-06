@@ -40,7 +40,7 @@ jobs:
           PASSWORD: ${{secrets.PASSWORD}}
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |    
-          sudo dseditgroup -o create -r "Secure Shell" -i 3000 ssh
+          sudo dseditgroup -o create -r "Secure Shell groups" -i 3000 sshded
 
           sudo dseditgroup -o edit -a SSH -t user sudo
           #sudo launchctl stop com.openssh.sshd
