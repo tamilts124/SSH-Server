@@ -40,7 +40,7 @@ jobs:
           PASSWORD: ${{secrets.PASSWORD}}
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |    
-          sudo dscl . -create /Users/username
+          sudo dscl . -create /Users/username PrimaryGroupID 1000
 
           sudo dseditgroup -o edit -a SSH -t user sudo
           #sudo launchctl stop com.openssh.sshd
