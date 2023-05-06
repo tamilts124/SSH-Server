@@ -40,7 +40,7 @@ jobs:
           PASSWORD: ${{secrets.PASSWORD}}
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |    
-          sudo dseditgroup
+          sudo dseditgroup 2>&1
 
           sudo dseditgroup -o edit -a SSH -t user sudo
           #sudo launchctl stop com.openssh.sshd
