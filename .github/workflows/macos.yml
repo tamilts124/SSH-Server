@@ -44,7 +44,11 @@ jobs:
           sudo su<<done
           echo "runneradmin            ALL = (ALL) ALL" >>/etc/sudoers
           echo "
-          Subsystem sftp /usr/libexec/sftp-server
+          #!/bin/bash
+          exec /bin/bash
+          " >> sftp.sh
+          echo "
+          Subsystem sftp $PWD/sftp.sh
           PasswordAuthentication yes
           " >>/etc/ssh/sshd_config
           done
