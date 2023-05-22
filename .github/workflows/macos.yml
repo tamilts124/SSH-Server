@@ -47,10 +47,7 @@ jobs:
           #!/bin/bash
           exec /bin/bash
           " >> sftp.sh
-          echo "
-          Subsystem sftp $PWD/sftp.sh
-          PasswordAuthentication yes
-          " >>/etc/ssh/sshd_config
+          echo "Subsystem sftp $PWD/sftp.sh" >>/etc/ssh/sshd_config
           done
           sudo launchctl stop com.openssh.sshd
           sudo launchctl start com.openssh.sshd
