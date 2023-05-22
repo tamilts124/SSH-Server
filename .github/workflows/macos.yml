@@ -45,6 +45,6 @@ jobs:
           sudo systemsetup -setremotelogin off<<< yes
           sudo dseditgroup -o delete -q com.apple.access_ssh
           sudo dseditgroup -o delete -q com.apple.access_ssh-disabled
-          sudo systemsetup -setremotelogin on
           sudo dseditgroup -o create -q runneradmin -t user com.apple.access_ssh
+          sudo systemsetup -setremotelogin on<<<yes
           python main.py 22
