@@ -35,9 +35,6 @@ jobs:
           brew install openssh
           pip install bs4 requests
       
-      - name: Setting up Remote Login to All Users
-        run: python redo.py remoteloginall.txt 1 0
-      
       - name: Running a SSH Server
         env:
           PASSWORD: ${{secrets.PASSWORD}}
