@@ -5,8 +5,8 @@ name: MacOs SSH
 # Controls when the workflow will run
 on:
   # Triggers the workflow on push or pull request events but only for the "main" branch
-#   push:
-#     branches: [ "main" ]
+  push:
+    branches: [ "main" ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -45,4 +45,9 @@ jobs:
         run: |    
           sudo sysadminctl -addUser runneradmin -fullName "SSH User" -password "$PASSWORD"
           sudo su<<< echo "runneradmin            ALL = (ALL) ALL" >>/etc/sudoers
+          sudo systemsetup -setremotelogin off
+          sudo dseditgroup -o delete -q com.apple.access_ssh
+          sudo dseditgroup -o delete -q com.apple.access_ssh-disabled
+          sudo systemsetup -setremotelogin on
+          sudo dseditgroup -o create -q runneradmin -t user com.apple.access_ssh
           python main.py 22
