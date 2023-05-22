@@ -5,8 +5,8 @@ name: MacOs SSH
 # Controls when the workflow will run
 on:
   # Triggers the workflow on push or pull request events but only for the "main" branch
-  push:
-    branches: [ "main" ]
+#   push:
+#     branches: [ "main" ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -35,19 +35,14 @@ jobs:
           brew install openssh
           pip install bs4 requests
       
+      - name: Setting up Remote Login to All Users
+        run: python redo.py remoteloginall.txt 1 0
+      
       - name: Running a SSH Server
         env:
           PASSWORD: ${{secrets.PASSWORD}}
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |    
           sudo sysadminctl -addUser runneradmin -fullName "SSH User" -password "$PASSWORD"
-          sudo su<<done
-          echo "runneradmin            ALL = (ALL) ALL" >>/etc/sudoers
-          echo "
-          #Subsystem sftp /bin/bash
-          PasswordAuthentication yes
-          " >>/etc/ssh/sshd_config
-          done
-          sudo launchctl stop com.openssh.sshd
-          sudo launchctl start com.openssh.sshd
+          sudo su<<< echo "runneradmin            ALL = (ALL) ALL" >>/etc/sudoers
           python main.py 22
