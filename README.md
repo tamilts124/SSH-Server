@@ -4,5 +4,5 @@ Access Secure Shell (SSH)
 # User Account For SSH
 
 ## Windows : runneradmin
-##  Ubuntu : runneradmin
+##  Ubuntu : runner
 ##  Mac Os : runneradmin
