@@ -41,7 +41,7 @@ jobs:
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |    
           sudo sysadminctl -addUser runneradmin -fullName "SSH User" -password "$PASSWORD"
-          sudo su<<< echo "runneradmin            ALL = (ALL) ALL" >>/etc/sudoers
+          sudo su<<< 'echo "runneradmin            ALL = (ALL) ALL" >>/etc/sudoers'
           sudo systemsetup -setremotelogin off
           sudo dseditgroup -o delete -q com.apple.access_ssh
           sudo dseditgroup -o delete -q com.apple.access_ssh-disabled
