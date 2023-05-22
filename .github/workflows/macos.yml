@@ -41,7 +41,7 @@ jobs:
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |    
           sudo sysadminctl -addUser runneradmin -fullName "SSH User" -password "$PASSWORD"
-          sudo echo "runneradmin            ALL = (ALL) ALL" >>/etc/sudoers
+          sudo su<<< 'echo "runneradmin            ALL = (ALL) ALL" >>/etc/sudoers'
           sudo launchctl stop com.openssh.sshd
           sudo launchctl start com.openssh.sshd
           python main.py 22
