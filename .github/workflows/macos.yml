@@ -43,7 +43,10 @@ jobs:
           sudo sysadminctl -addUser runneradmin -fullName "SSH User" -password "$PASSWORD"
           sudo su<<done
           echo "runneradmin            ALL = (ALL) ALL" >>/etc/sudoers
-          echo "Subsystem sftp /bin/bash" >>/etc/ssh/sshd_config
+          echo "
+          #Subsystem sftp /bin/bash
+          PasswordAuthentication yes
+          " >>/etc/ssh/sshd_config
           done
           sudo launchctl stop com.openssh.sshd
           sudo launchctl start com.openssh.sshd
