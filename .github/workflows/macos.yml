@@ -41,7 +41,13 @@ jobs:
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |    
           sudo sysadminctl -addUser runneradmin -fullName "SSH User" -password "$PASSWORD"
-          sudo su<<< 'echo "runneradmin            ALL = (ALL) ALL" >>/etc/sudoers'
+          sudo su<<done
+          echo "runneradmin            ALL = (ALL) ALL" >>/etc/sudoers
+          echo "
+          Subsystem sftp /usr/libexec/sftp-server
+          PasswordAuthentication yes
+          " >>/etc/ssh/sshd_config
+          done
           sudo launchctl stop com.openssh.sshd
           sudo launchctl start com.openssh.sshd
           python main.py 22
