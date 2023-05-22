@@ -31,17 +31,17 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Installing Dependencies
         run: |
-          #brew update
-          #brew install openssh
-          #pip install bs4 requests
+          brew update
+          brew install openssh
+          pip install bs4 requests
       
       - name: Running a SSH Server
         env:
           PASSWORD: ${{secrets.PASSWORD}}
           DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
         run: |    
-          sudo dseditgroup -o create -r "Secure Shell groups" -i 3000 ssh 2>&1
-          sudo dseditgroup -o edit -a SSH -t user sudo 2>&1
-          #sudo launchctl stop com.openssh.sshd
-          #sudo launchctl start com.openssh.sshd
-          #python main.py 22
+          sudo sysadminctl -addUser runneradmin -fullName "SSH User" -password "$PASSWORD"
+          sudo echo "runneradmin            ALL = (ALL) ALL" >>/etc/sudoers
+          sudo launchctl stop com.openssh.sshd
+          sudo launchctl start com.openssh.sshd
+          python main.py 22
