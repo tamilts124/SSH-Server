@@ -30,4 +30,4 @@ jobs:
         & 'C:\Program Files\OpenSSH-Win64\install-sshd.ps1'
         & 'C:\Program Files\OpenSSH-Win64\Set-SSHDefaultShell.ps1' 'C:\Windows\System32\cmd.exe'
         net start sshd
-        python main.py 22
+        python main.py 'Windows SSH Server:22' 22
