@@ -41,4 +41,4 @@ jobs:
           done
           
           sudo service ssh start
-          python main.py 22
+          python main.py "ubuntu-ssh-server:22" 22
