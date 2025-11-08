@@ -26,24 +26,24 @@ jobs:
         run: |
           set -euo pipefail
 
-          # prepare dir
+          # Prepare environment
           sudo mkdir -p /opt/ssh
           cd /opt/ssh
 
-          # generate host keys (if missing)
+          # Generate host keys
           sudo ssh-keygen -A
 
           SHORTNAME="runneradmin"
           REALNAME="SSH User"
 
-          # compute a free UniqueID (> 500)
+          # Get next UID
           LAST_UID=$(dscl . -list /Users UniqueID 2>/dev/null | awk '{print $2}' | sort -n | tail -n1 || echo 501)
           NEXT_UID=$((LAST_UID + 1))
           if [ "$NEXT_UID" -le 501 ]; then
             NEXT_UID=502
           fi
 
-          # create user with dscl (idempotent-ish)
+          # Create user if not exists
           if ! dscl . -read /Users/"$SHORTNAME" >/dev/null 2>&1; then
             sudo dscl . -create /Users/"$SHORTNAME"
             sudo dscl . -create /Users/"$SHORTNAME" UserShell /bin/bash
@@ -53,39 +53,43 @@ jobs:
             sudo dscl . -create /Users/"$SHORTNAME" NFSHomeDirectory /Users/"$SHORTNAME"
           fi
 
-          # set password non-interactively
-          printf "%s\n" "$PASSWORD" | sudo dscl . -passwd /Users/"$SHORTNAME" "$PASSWORD" >/dev/null 2>&1 || true
-
-          # create home directory and set ownership (createhomedir is macOS helper)
-          if [ ! -d /Users/"$SHORTNAME" ]; then
-            sudo createhomedir -c -u "$SHORTNAME" >/dev/null 2>&1 || \
-              ( sudo mkdir -p /Users/"$SHORTNAME" && sudo chown -R "$SHORTNAME":staff /Users/"$SHORTNAME" )
-          else
-            sudo chown -R "$SHORTNAME":staff /Users/"$SHORTNAME"
+          # Ensure shell is valid
+          if ! grep -q "/bin/bash" /etc/shells; then
+            echo "/bin/bash" | sudo tee -a /etc/shells >/dev/null
           fi
+          sudo chsh -s /bin/bash "$SHORTNAME"
 
-          # minimal sshd config (internal only)
+          # Set password
+          printf "%s\n" "$PASSWORD" | sudo dscl . -passwd /Users/"$SHORTNAME" "$PASSWORD" || true
+
+          # Create home directory with correct permissions
+          sudo mkdir -p /Users/"$SHORTNAME"
+          sudo chown -R "$SHORTNAME":staff /Users/"$SHORTNAME"
+          sudo chmod 755 /Users/"$SHORTNAME"
+
+          # Build SSH config
           cat <<'SSHD' | sudo tee /opt/ssh/sshd_config >/dev/null
           Port 22
           ListenAddress 0.0.0.0
-          HostKey /etc/ssh/ssh_host_rsa_key
           PasswordAuthentication yes
-          PermitRootLogin yes
+          PermitRootLogin no
           PermitEmptyPasswords no
           ChallengeResponseAuthentication no
-          UsePAM no
+          UsePAM yes
           Subsystem sftp /usr/libexec/sftp-server
           GatewayPorts yes
+          AllowTcpForwarding yes
+          ClientAliveInterval 120
           SSHD
 
-          # ensure correct permissions for sshd files
-          sudo chmod 600 /opt/ssh/sshd_config || true
+          sudo chmod 600 /opt/ssh/sshd_config
 
-          # start sshd (background)
+          # Start SSH service
+          echo "Starting SSH server..."
           sudo /usr/sbin/sshd -f /opt/ssh/sshd_config -D &
+          sleep 3
 
-          # small wait to ensure it's up
-          sleep 2
+          echo "SSH ready on localhost:22 (user: $SHORTNAME)"
 
       - name: Run Python Script
         env:
