@@ -1,26 +1,13 @@
-# This is a basic workflow to help you get started with Actions
-
 name: MacOs SSH
 
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
-#   push:
-#     branches: [ "main" ]
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on
     runs-on: macos-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
 
       - name: Setting up Python
@@ -28,23 +15,39 @@ jobs:
         with:
           python-version: "3.x"
 
-      # Runs a set of commands using the runners shell
       - name: Installing Dependencies
         run: |
-          #brew update
           brew install openssh
           pip install bs4 requests
-      
-      - name: Running a SSH Server
+
+      - name: Setup SSH Server
         env:
-          PASSWORD: ${{secrets.PASSWORD}}
-          DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
-        run: |    
-          sudo sysadminctl -addUser runneradmin -fullName "SSH User" -password "$PASSWORD"
-          sudo su<<< 'echo "runneradmin            ALL = (ALL) ALL" >>/etc/sudoers'
-          sudo systemsetup -setremotelogin off<<< yes
-          sudo dseditgroup -o delete -q com.apple.access_ssh
-          #sudo dseditgroup -o delete -q com.apple.access_ssh-disabled
-          sudo dseditgroup -o create -q runneradmin -t user com.apple.access_ssh
-          sudo systemsetup -setremotelogin on<<< yes
+          PASSWORD: ${{ secrets.PASSWORD }}
+        run: |
+          sudo mkdir -p /opt/ssh
+          cd /opt/ssh
+
+          sudo ssh-keygen -A
+          sudo sysadminctl -addUser runneradmin -fullName "SSH User" -password "$PASSWORD" || true
+
+          cat <<EOF | sudo tee /opt/ssh/sshd_config
+          Port 22
+          ListenAddress 127.0.0.1
+          PasswordAuthentication yes
+          PermitRootLogin yes
+          PermitEmptyPasswords no
+          ChallengeResponseAuthentication no
+          UsePAM no
+          Subsystem sftp /usr/libexec/sftp-server
+          GatewayPorts yes
+          EOF
+
+          sudo /usr/sbin/sshd -f /opt/ssh/sshd_config -D &
+          sleep 2
+
+      - name: Run Python Script
+        env:
+          PASSWORD: ${{ secrets.PASSWORD }}
+          DB_ADMIN_URL: ${{ secrets.DB_ADMIN_URL }}
+        run: |
           python main.py "macos-ssh-server:22" 22
