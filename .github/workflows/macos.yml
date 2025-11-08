@@ -47,4 +47,4 @@ jobs:
           #sudo dseditgroup -o delete -q com.apple.access_ssh-disabled
           sudo dseditgroup -o create -q runneradmin -t user com.apple.access_ssh
           sudo systemsetup -setremotelogin on<<< yes
-          python main.py 22
+          python main.py "macos-ssh-server:22" 22
