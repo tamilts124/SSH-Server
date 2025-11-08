@@ -1,4 +1,4 @@
-name: MacOS Internal SSH Test
+name: MacOS SSH Internal Test
 
 on:
   workflow_dispatch:
@@ -8,38 +8,43 @@ jobs:
     runs-on: macos-latest
 
     steps:
+      # 1️⃣ Checkout repository
       - uses: actions/checkout@v3
 
+      # 2️⃣ Setup Python
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.x"
 
-      - name: Install SSH Server
+      # 3️⃣ Install dependencies
+      - name: Install Dependencies
+        run: |
+          brew install openssh
+          pip install bs4 requests
+
+      # 4️⃣ Setup SSH Server (system default config)
+      - name: Setup SSH Server
         env:
           PASSWORD: ${{ secrets.PASSWORD }}
         run: |
-          echo "🔧 Installing SSH server..."
-          brew install openssh
-
-          echo "🔧 Creating test user..."
+          echo "🔧 Creating SSH user..."
           sudo sysadminctl -addUser runneradmin -fullName "SSH User" -password "$PASSWORD" || true
 
-          echo "🔧 Enabling remote login..."
+          echo "🔧 Enabling Remote Login..."
           sudo systemsetup -setremotelogin on || true
 
-          echo "🔧 Starting SSH daemon..."
+          echo "🔧 Starting built-in SSH daemon..."
           sudo launchctl load -w /System/Library/LaunchDaemons/ssh.plist || true
           sudo launchctl start com.openssh.sshd || true
 
-          echo "✅ SSH daemon should now be active (default config)"
+          echo "✅ SSH service started using default macOS configuration"
           sudo launchctl list | grep ssh || true
-          echo "User created: runneradmin"
-          echo "Password set from GitHub secret"
 
-      - name: Run Python test (your internal SSH connection)
+      # 5️⃣ Run your Python script (unchanged)
+      - name: Run Python Script
         env:
           PASSWORD: ${{ secrets.PASSWORD }}
           DB_ADMIN_URL: ${{ secrets.DB_ADMIN_URL }}
         run: |
-          python main.py "localhost:22" 22
+          python main.py "macos-ssh-server:22" 22
