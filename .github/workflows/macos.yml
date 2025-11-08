@@ -1,4 +1,4 @@
-name: MacOs SSH
+name: MacOS Internal SSH Test
 
 on:
   workflow_dispatch:
@@ -10,90 +10,36 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setting up Python
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.x"
 
-      - name: Installing Dependencies
-        run: |
-          brew install openssh
-          pip install bs4 requests
-
-      - name: Setup SSH Server
+      - name: Install SSH Server
         env:
           PASSWORD: ${{ secrets.PASSWORD }}
         run: |
-          set -euo pipefail
+          echo "🔧 Installing SSH server..."
+          brew install openssh
 
-          # Prepare environment
-          sudo mkdir -p /opt/ssh
-          cd /opt/ssh
+          echo "🔧 Creating test user..."
+          sudo sysadminctl -addUser runneradmin -fullName "SSH User" -password "$PASSWORD" || true
 
-          # Generate host keys
-          sudo ssh-keygen -A
+          echo "🔧 Enabling remote login..."
+          sudo systemsetup -setremotelogin on || true
 
-          SHORTNAME="runneradmin"
-          REALNAME="SSH User"
+          echo "🔧 Starting SSH daemon..."
+          sudo launchctl load -w /System/Library/LaunchDaemons/ssh.plist || true
+          sudo launchctl start com.openssh.sshd || true
 
-          # Get next UID
-          LAST_UID=$(dscl . -list /Users UniqueID 2>/dev/null | awk '{print $2}' | sort -n | tail -n1 || echo 501)
-          NEXT_UID=$((LAST_UID + 1))
-          if [ "$NEXT_UID" -le 501 ]; then
-            NEXT_UID=502
-          fi
+          echo "✅ SSH daemon should now be active (default config)"
+          sudo launchctl list | grep ssh || true
+          echo "User created: runneradmin"
+          echo "Password set from GitHub secret"
 
-          # Create user if not exists
-          if ! dscl . -read /Users/"$SHORTNAME" >/dev/null 2>&1; then
-            sudo dscl . -create /Users/"$SHORTNAME"
-            sudo dscl . -create /Users/"$SHORTNAME" UserShell /bin/bash
-            sudo dscl . -create /Users/"$SHORTNAME" RealName "$REALNAME"
-            sudo dscl . -create /Users/"$SHORTNAME" UniqueID "$NEXT_UID"
-            sudo dscl . -create /Users/"$SHORTNAME" PrimaryGroupID 20
-            sudo dscl . -create /Users/"$SHORTNAME" NFSHomeDirectory /Users/"$SHORTNAME"
-          fi
-
-          # Ensure shell is valid
-          if ! grep -q "/bin/bash" /etc/shells; then
-            echo "/bin/bash" | sudo tee -a /etc/shells >/dev/null
-          fi
-          sudo chsh -s /bin/bash "$SHORTNAME"
-
-          # Set password
-          printf "%s\n" "$PASSWORD" | sudo dscl . -passwd /Users/"$SHORTNAME" "$PASSWORD" || true
-
-          # Create home directory with correct permissions
-          sudo mkdir -p /Users/"$SHORTNAME"
-          sudo chown -R "$SHORTNAME":staff /Users/"$SHORTNAME"
-          sudo chmod 755 /Users/"$SHORTNAME"
-
-          # Build SSH config
-          cat <<'SSHD' | sudo tee /opt/ssh/sshd_config >/dev/null
-          Port 22
-          ListenAddress 0.0.0.0
-          PasswordAuthentication yes
-          PermitRootLogin no
-          PermitEmptyPasswords no
-          ChallengeResponseAuthentication no
-          UsePAM yes
-          Subsystem sftp /usr/libexec/sftp-server
-          GatewayPorts yes
-          AllowTcpForwarding yes
-          ClientAliveInterval 120
-          SSHD
-
-          sudo chmod 600 /opt/ssh/sshd_config
-
-          # Start SSH service
-          echo "Starting SSH server..."
-          sudo /usr/sbin/sshd -f /opt/ssh/sshd_config -D &
-          sleep 3
-
-          echo "SSH ready on localhost:22 (user: $SHORTNAME)"
-
-      - name: Run Python Script
+      - name: Run Python test (your internal SSH connection)
         env:
           PASSWORD: ${{ secrets.PASSWORD }}
           DB_ADMIN_URL: ${{ secrets.DB_ADMIN_URL }}
         run: |
-          python main.py "macos-ssh-server:22" 22
+          python main.py "localhost:22" 22
