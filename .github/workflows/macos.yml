@@ -56,7 +56,22 @@ jobs:
           done
       
           sudo launchctl list | grep ssh || true
+      
+      
+      - name: Test SSH Locally
+        env:
+          PASSWORD: ${{ secrets.PASSWORD }}
+        run: |
+          echo "🔧 Testing SSH login locally..."
+          sshpass -p "$PASSWORD" ssh -v -o StrictHostKeyChecking=no -p 22 runneradmin@localhost "echo '✅ SSH Login Success'; whoami; pwd; bash --version"
 
+      - name: Check SSH Logs
+        run: |
+          sudo cat /var/log/system.log | grep sshd | tail -20 || true
+          sudo log show --predicate 'process == "sshd"' --last 5m || true
+       
+      
+      
       # 5️⃣ Run Python Script
       - name: Run Python Script
         env:
