@@ -1,12 +1,9 @@
 name: MacOS SSH Internal Test
-
 on:
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: macos-latest
-
     steps:
       # 1️⃣ Checkout repository
       - uses: actions/checkout@v3
@@ -20,10 +17,9 @@ jobs:
       # 3️⃣ Install dependencies
       - name: Install Dependencies
         run: |
-          brew install openssh
           pip install bs4 requests
 
-      # 4️⃣ Setup SSH Server (system default config)
+      # 4️⃣ Setup SSH Server
       - name: Setup SSH Server
         env:
           PASSWORD: ${{ secrets.PASSWORD }}
@@ -31,17 +27,30 @@ jobs:
           echo "🔧 Creating SSH user..."
           sudo sysadminctl -addUser runneradmin -fullName "SSH User" -password "$PASSWORD" || true
 
+          echo "🔧 Forcing bash shell for user..."
+          sudo dscl . -create /Users/runneradmin UserShell /bin/bash
+
           echo "🔧 Enabling Remote Login..."
           sudo systemsetup -setremotelogin on || true
 
-          echo "🔧 Starting built-in SSH daemon..."
+          echo "🔧 Starting SSH daemon..."
           sudo launchctl load -w /System/Library/LaunchDaemons/ssh.plist || true
           sudo launchctl start com.openssh.sshd || true
 
-          echo "✅ SSH service started using default macOS configuration"
+          echo "⏳ Waiting for SSH to be ready..."
+          for i in $(seq 1 30); do
+            if nc -z localhost 22; then
+              echo "✅ SSH is ready!"
+              break
+            fi
+            echo "Waiting... ($i)"
+            sleep 2
+          done
+
+          echo "✅ Verifying SSH service..."
           sudo launchctl list | grep ssh || true
 
-      # 5️⃣ Run your Python script (unchanged)
+      # 5️⃣ Run Python Script
       - name: Run Python Script
         env:
           PASSWORD: ${{ secrets.PASSWORD }}
