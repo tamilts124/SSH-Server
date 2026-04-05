@@ -90,7 +90,7 @@ jobs:
           sshpass -p "$PASSWORD" ssh \
             -o StrictHostKeyChecking=no \
             -o PreferredAuthentications=password \
-            -p 2222 runneradmin@localhost \
+            -p 22 runneradmin@localhost \
             "echo 'Login Success'; whoami; pwd"
 
       # 5 Run Python Script
