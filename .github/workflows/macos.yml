@@ -28,7 +28,7 @@ jobs:
           sudo sysadminctl -addUser runneradmin -fullName "SSH User" -password "$PASSWORD" || true
       
           echo "🔧 Setting password via dscl..."
-          echo "$PASSWORD" | sudo passwd runneradmin
+          sudo dscl . -passwd /Users/runneradmin "$PASSWORD"
       
           echo "🔧 Forcing bash shell for user..."
           sudo dscl . -create /Users/runneradmin UserShell /bin/bash
@@ -37,13 +37,15 @@ jobs:
           sudo sed -i '' 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
           sudo sed -i '' 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
           sudo sed -i '' 's/#KbdInteractiveAuthentication yes/KbdInteractiveAuthentication yes/' /etc/ssh/sshd_config
+          sudo sed -i '' 's/KbdInteractiveAuthentication no/KbdInteractiveAuthentication yes/' /etc/ssh/sshd_config
       
           echo "🔧 Enabling Remote Login..."
           sudo systemsetup -setremotelogin on || true
       
-          echo "🔧 Starting SSH daemon..."
+          echo "🔧 Restarting SSH daemon..."
+          sudo launchctl unload /System/Library/LaunchDaemons/ssh.plist || true
+          sleep 1
           sudo launchctl load -w /System/Library/LaunchDaemons/ssh.plist || true
-          sudo launchctl start com.openssh.sshd || true
       
           echo "⏳ Waiting for SSH to be ready..."
           for i in $(seq 1 30); do
@@ -55,24 +57,19 @@ jobs:
             sleep 2
           done
       
-          sudo launchctl list | grep ssh || true
+          echo "🔧 Verifying password set correctly..."
+          sudo dscl . -read /Users/runneradmin AuthenticationAuthority | head -3
+          sudo dscl . -read /Users/runneradmin UserShell
       
+          echo "🔧 Testing SSH locally..."
+          brew install sshpass
+          sshpass -p "$PASSWORD" ssh -v \
+            -o StrictHostKeyChecking=no \
+            -o PasswordAuthentication=yes \
+            -p 22 runneradmin@localhost \
+            "echo '✅ Login Success'; whoami; pwd"
       
-      - name: Test SSH Locally
-        env:
-          PASSWORD: ${{ secrets.PASSWORD }}
-        run: |
-          echo "🔧 Testing SSH login locally..."
-          sshpass -p "$PASSWORD" ssh -v -o StrictHostKeyChecking=no -p 22 runneradmin@localhost "echo '✅ SSH Login Success'; whoami; pwd; bash --version"
-
-      - name: Check SSH Logs
-        run: |
-          sudo cat /var/log/system.log | grep sshd | tail -20 || true
-          sudo log show --predicate 'process == "sshd"' --last 5m || true
-       
-      
-      
-      # 5️⃣ Run Python Script
+        # 5️⃣ Run Python Script
       - name: Run Python Script
         env:
           PASSWORD: ${{ secrets.PASSWORD }}
