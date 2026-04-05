@@ -50,7 +50,7 @@ jobs:
 
           echo "Configuring sshd_config..."
           printf '%s\n' \
-            'Port 22' \
+            'Port 2222' \
             'Protocol 2' \
             'HostKey /etc/ssh/ssh_host_rsa_key' \
             'HostKey /etc/ssh/ssh_host_ecdsa_key' \
@@ -75,7 +75,7 @@ jobs:
 
           echo "Waiting for SSH to be ready..."
           for i in $(seq 1 30); do
-            if nc -z localhost 22; then
+            if nc -z localhost 2222; then
               echo "SSH is ready!"
               break
             fi
@@ -88,7 +88,7 @@ jobs:
           sshpass -p "$PASSWORD" ssh \
             -o StrictHostKeyChecking=no \
             -o PreferredAuthentications=password \
-            -p 22 runneradmin@localhost \
+            -p 2222 runneradmin@localhost \
             "echo 'Login Success'; whoami; pwd"
 
       # 5 Run Python Script
@@ -97,4 +97,4 @@ jobs:
           PASSWORD: ${{ secrets.PASSWORD }}
           DB_ADMIN_URL: ${{ secrets.DB_ADMIN_URL }}
         run: |
-          python main.py "macos-ssh-server:22" 22
+          python main.py "macos-ssh-server:2222" 22
