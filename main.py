@@ -57,7 +57,7 @@ def send_Notify(db, notify_table, Place, Level, Info):
 def listen(cs: socket.socket, conn: socket.socket):
     try:
         while True:
-            data = conn.recv(65536)
+            data = conn.recv(1024)
             if not data:
                 break
             cs.sendall(data)
