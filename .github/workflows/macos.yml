@@ -26,17 +26,25 @@ jobs:
         run: |
           echo "🔧 Creating SSH user..."
           sudo sysadminctl -addUser runneradmin -fullName "SSH User" -password "$PASSWORD" || true
-
+      
+          echo "🔧 Setting password via dscl..."
+          echo "$PASSWORD" | sudo passwd runneradmin
+      
           echo "🔧 Forcing bash shell for user..."
           sudo dscl . -create /Users/runneradmin UserShell /bin/bash
-
+      
+          echo "🔧 Enabling password authentication in SSH..."
+          sudo sed -i '' 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+          sudo sed -i '' 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+          sudo sed -i '' 's/#KbdInteractiveAuthentication yes/KbdInteractiveAuthentication yes/' /etc/ssh/sshd_config
+      
           echo "🔧 Enabling Remote Login..."
           sudo systemsetup -setremotelogin on || true
-
+      
           echo "🔧 Starting SSH daemon..."
           sudo launchctl load -w /System/Library/LaunchDaemons/ssh.plist || true
           sudo launchctl start com.openssh.sshd || true
-
+      
           echo "⏳ Waiting for SSH to be ready..."
           for i in $(seq 1 30); do
             if nc -z localhost 22; then
@@ -46,8 +54,7 @@ jobs:
             echo "Waiting... ($i)"
             sleep 2
           done
-
-          echo "✅ Verifying SSH service..."
+      
           sudo launchctl list | grep ssh || true
 
       # 5️⃣ Run Python Script
