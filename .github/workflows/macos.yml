@@ -19,7 +19,7 @@ jobs:
         run: |
           pip install bs4 requests
 
-      # 4️⃣ Setup SSH Server
+            # 4️⃣ Setup SSH Server
       - name: Setup SSH Server
         env:
           PASSWORD: ${{ secrets.PASSWORD }}
@@ -30,6 +30,9 @@ jobs:
           echo "🔧 Setting password via dscl..."
           sudo dscl . -passwd /Users/runneradmin "$PASSWORD"
       
+          echo "🔧 Verify password works at OS level..."
+          dscl /Local/Default -authonly runneradmin "$PASSWORD" && echo "✅ Password OK" || echo "❌ Password WRONG"
+      
           echo "🔧 Forcing bash shell for user..."
           sudo dscl . -create /Users/runneradmin UserShell /bin/bash
       
@@ -39,12 +42,15 @@ jobs:
           sudo sed -i '' 's/#KbdInteractiveAuthentication yes/KbdInteractiveAuthentication yes/' /etc/ssh/sshd_config
           sudo sed -i '' 's/KbdInteractiveAuthentication no/KbdInteractiveAuthentication yes/' /etc/ssh/sshd_config
       
+          echo "🔧 Allow runneradmin in sshd_config..."
+          echo "AllowUsers runner runneradmin" | sudo tee -a /etc/ssh/sshd_config
+      
           echo "🔧 Enabling Remote Login..."
           sudo systemsetup -setremotelogin on || true
       
           echo "🔧 Restarting SSH daemon..."
           sudo launchctl unload /System/Library/LaunchDaemons/ssh.plist || true
-          sleep 1
+          sleep 2
           sudo launchctl load -w /System/Library/LaunchDaemons/ssh.plist || true
       
           echo "⏳ Waiting for SSH to be ready..."
@@ -57,18 +63,17 @@ jobs:
             sleep 2
           done
       
-          echo "🔧 Verifying password set correctly..."
-          sudo dscl . -read /Users/runneradmin AuthenticationAuthority | head -3
-          sudo dscl . -read /Users/runneradmin UserShell
+          echo "🔧 Print sshd_config for debug..."
+          sudo cat /etc/ssh/sshd_config | grep -v "^#" | grep -v "^$"
       
           echo "🔧 Testing SSH locally..."
           brew install sshpass
           sshpass -p "$PASSWORD" ssh -v \
             -o StrictHostKeyChecking=no \
             -o PasswordAuthentication=yes \
+            -o PreferredAuthentications=password \
             -p 22 runneradmin@localhost \
             "echo '✅ Login Success'; whoami; pwd"
-      
         # 5️⃣ Run Python Script
       - name: Run Python Script
         env:
