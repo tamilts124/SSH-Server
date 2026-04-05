@@ -54,17 +54,29 @@ def send_Notify(db, notify_table, Place, Level, Info):
     else: query =f'insert into {notify_table} (Place, Level, NewDate, NewTime, Info) values ("{Place}", "{Level}", "{day.strftime(r"%Y-%m-%d")}", "{day.strftime("%H:%M %p")}", "{Info}")'
     return db.query(query)
 
-def listen(cs:socket.socket, conn:socket.socket):
-    while True:
-        data =conn.recv(65536)
-        cs.sendall(data)
+def listen(cs: socket.socket, conn: socket.socket):
+    try:
+        while True:
+            data = conn.recv(65536)
+            if not data:  # connection closed cleanly
+                break
+            cs.sendall(data)
+    except (ConnectionResetError, BrokenPipeError, OSError):
+        pass  # connection dropped, exit thread gracefully
+    finally:
+        try: cs.shutdown(socket.SHUT_WR)
+        except: pass
+        try: conn.shutdown(socket.SHUT_WR)
+        except: pass
 
 def shareCAS(clienthost, clientport, serverhost, serverport):
-    ss, cs, =socket.socket(), socket.socket()
+    ss, cs = socket.socket(), socket.socket()
+    ss.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+    cs.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
     ss.connect((serverhost, serverport))
     cs.connect((clienthost, clientport))
-    Thread(target=listen, args=[cs, ss]).start()
-    Thread(target=listen, args=[ss, cs]).start()
+    Thread(target=listen, args=[cs, ss], daemon=True).start()
+    Thread(target=listen, args=[ss, cs], daemon=True).start()
 
 def createMessage(infdb:Infinitydatabase, message, extra):
     send_Notify(infdb, 'Notifier', 'CS-Intermediater', 'Info-High', message+extra)
