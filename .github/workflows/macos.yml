@@ -36,15 +36,35 @@ jobs:
           echo "🔧 Forcing bash shell for user..."
           sudo dscl . -create /Users/runneradmin UserShell /bin/bash
       
-          echo "🔧 Enabling password authentication in SSH..."
-          sudo sed -i '' 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
-          sudo sed -i '' 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
-          sudo sed -i '' 's/#KbdInteractiveAuthentication yes/KbdInteractiveAuthentication yes/' /etc/ssh/sshd_config
-          sudo sed -i '' 's/KbdInteractiveAuthentication no/KbdInteractiveAuthentication yes/' /etc/ssh/sshd_config
+          echo "🔧 Fix PAM for SSH..."
+          sudo tee /etc/pam.d/sshd > /dev/null <<'EOF'
+            auth       sufficient     pam_opendirectory.so
+            auth       required       pam_deny.so
+            account    required       pam_nologin.so
+            account    required       pam_opendirectory.so
+            password   required       pam_opendirectory.so
+            session    required       pam_launchd.so
+            session    required       pam_uwtmp.so
+            session    optional       pam_mount.so
+            EOF
       
-          echo "🔧 Allow runneradmin in sshd_config..."
-          echo "AllowUsers runner runneradmin" | sudo tee -a /etc/ssh/sshd_config
-      
+          echo "🔧 Configuring sshd_config..."
+          sudo tee /etc/ssh/sshd_config > /dev/null <<'EOF'
+            Port 22
+            Protocol 2
+            HostKey /etc/ssh/ssh_host_rsa_key
+            HostKey /etc/ssh/ssh_host_ecdsa_key
+            HostKey /etc/ssh/ssh_host_ed25519_key
+            AuthorizedKeysFile .ssh/authorized_keys
+            PasswordAuthentication yes
+            KbdInteractiveAuthentication yes
+            UsePAM yes
+            ChallengeResponseAuthentication yes
+            PrintMotd yes
+            Subsystem sftp /usr/libexec/sftp-server
+            AllowUsers runner runneradmin
+            EOF
+            
           echo "🔧 Enabling Remote Login..."
           sudo systemsetup -setremotelogin on || true
       
@@ -63,18 +83,14 @@ jobs:
             sleep 2
           done
       
-          echo "🔧 Print sshd_config for debug..."
-          sudo cat /etc/ssh/sshd_config | grep -v "^#" | grep -v "^$"
-      
           echo "🔧 Testing SSH locally..."
           brew install sshpass
           sshpass -p "$PASSWORD" ssh -v \
             -o StrictHostKeyChecking=no \
-            -o PasswordAuthentication=yes \
             -o PreferredAuthentications=password \
             -p 22 runneradmin@localhost \
             "echo '✅ Login Success'; whoami; pwd"
-        # 5️⃣ Run Python Script
+      
       - name: Run Python Script
         env:
           PASSWORD: ${{ secrets.PASSWORD }}
