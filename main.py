@@ -58,16 +58,11 @@ def listen(cs: socket.socket, conn: socket.socket):
     try:
         while True:
             data = conn.recv(65536)
-            if not data:  # connection closed cleanly
+            if not data:
                 break
             cs.sendall(data)
     except (ConnectionResetError, BrokenPipeError, OSError):
-        pass  # connection dropped, exit thread gracefully
-    finally:
-        try: cs.shutdown(socket.SHUT_WR)
-        except: pass
-        try: conn.shutdown(socket.SHUT_WR)
-        except: pass
+        pass
 
 def shareCAS(clienthost, clientport, serverhost, serverport):
     ss, cs = socket.socket(), socket.socket()
