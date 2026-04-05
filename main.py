@@ -56,7 +56,7 @@ def send_Notify(db, notify_table, Place, Level, Info):
 
 def listen(cs:socket.socket, conn:socket.socket):
     while True:
-        data =conn.recv(1024)
+        data =conn.recv(65536)
         cs.sendall(data)
 
 def shareCAS(clienthost, clientport, serverhost, serverport):
