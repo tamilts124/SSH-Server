@@ -5,79 +5,93 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
+      # 1 Checkout repository
       - uses: actions/checkout@v3
 
+      # 2 Setup Python
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.x"
 
+      # 3 Install dependencies
       - name: Install Dependencies
         run: |
           pip install bs4 requests
 
+      # 4 Setup SSH Server
       - name: Setup SSH Server
         env:
           PASSWORD: ${{ secrets.PASSWORD }}
         run: |
-          echo "🔧 Creating SSH user..."
+          echo "Creating SSH user..."
           sudo sysadminctl -addUser runneradmin -fullName "SSH User" -password "$PASSWORD" || true
-          echo "🔧 Setting password via dscl..."
+
+          echo "Setting password via dscl..."
           sudo dscl . -passwd /Users/runneradmin "$PASSWORD"
-          echo "🔧 Verify password works at OS level..."
-          dscl /Local/Default -authonly runneradmin "$PASSWORD" && echo "✅ Password OK" || echo "❌ Password WRONG"
-          echo "🔧 Forcing bash shell for user..."
+
+          echo "Verify password works at OS level..."
+          dscl /Local/Default -authonly runneradmin "$PASSWORD" && echo "Password OK" || echo "Password WRONG"
+
+          echo "Forcing bash shell for user..."
           sudo dscl . -create /Users/runneradmin UserShell /bin/bash
-          echo "🔧 Fix PAM for SSH..."
-          sudo tee /etc/pam.d/sshd > /dev/null <<'EOF'
-auth       sufficient     pam_opendirectory.so
-auth       required       pam_deny.so
-account    required       pam_nologin.so
-account    required       pam_opendirectory.so
-password   required       pam_opendirectory.so
-session    required       pam_launchd.so
-session    required       pam_uwtmp.so
-session    optional       pam_mount.so
-EOF
-          echo "🔧 Configuring sshd_config..."
-          sudo tee /etc/ssh/sshd_config > /dev/null <<'EOF'
-Port 22
-Protocol 2
-HostKey /etc/ssh/ssh_host_rsa_key
-HostKey /etc/ssh/ssh_host_ecdsa_key
-HostKey /etc/ssh/ssh_host_ed25519_key
-AuthorizedKeysFile .ssh/authorized_keys
-PasswordAuthentication yes
-KbdInteractiveAuthentication yes
-UsePAM yes
-ChallengeResponseAuthentication yes
-PrintMotd yes
-Subsystem sftp /usr/libexec/sftp-server
-AllowUsers runner runneradmin
-EOF
-          echo "🔧 Enabling Remote Login..."
+
+          echo "Fix PAM for SSH..."
+          printf '%s\n' \
+            'auth       sufficient     pam_opendirectory.so' \
+            'auth       required       pam_deny.so' \
+            'account    required       pam_nologin.so' \
+            'account    required       pam_opendirectory.so' \
+            'password   required       pam_opendirectory.so' \
+            'session    required       pam_launchd.so' \
+            'session    required       pam_uwtmp.so' \
+            'session    optional       pam_mount.so' \
+            | sudo tee /etc/pam.d/sshd > /dev/null
+
+          echo "Configuring sshd_config..."
+          printf '%s\n' \
+            'Port 22' \
+            'Protocol 2' \
+            'HostKey /etc/ssh/ssh_host_rsa_key' \
+            'HostKey /etc/ssh/ssh_host_ecdsa_key' \
+            'HostKey /etc/ssh/ssh_host_ed25519_key' \
+            'AuthorizedKeysFile .ssh/authorized_keys' \
+            'PasswordAuthentication yes' \
+            'KbdInteractiveAuthentication yes' \
+            'UsePAM yes' \
+            'ChallengeResponseAuthentication yes' \
+            'PrintMotd yes' \
+            'Subsystem sftp /usr/libexec/sftp-server' \
+            'AllowUsers runner runneradmin' \
+            | sudo tee /etc/ssh/sshd_config > /dev/null
+
+          echo "Enabling Remote Login..."
           sudo systemsetup -setremotelogin on || true
-          echo "🔧 Restarting SSH daemon..."
+
+          echo "Restarting SSH daemon..."
           sudo launchctl unload /System/Library/LaunchDaemons/ssh.plist || true
           sleep 2
           sudo launchctl load -w /System/Library/LaunchDaemons/ssh.plist || true
-          echo "⏳ Waiting for SSH to be ready..."
+
+          echo "Waiting for SSH to be ready..."
           for i in $(seq 1 30); do
             if nc -z localhost 22; then
-              echo "✅ SSH is ready!"
+              echo "SSH is ready!"
               break
             fi
             echo "Waiting... ($i)"
             sleep 2
           done
-          echo "🔧 Testing SSH locally..."
+
+          echo "Testing SSH locally..."
           brew install sshpass
           sshpass -p "$PASSWORD" ssh \
             -o StrictHostKeyChecking=no \
             -o PreferredAuthentications=password \
             -p 22 runneradmin@localhost \
-            "echo '✅ Login Success'; whoami; pwd"
+            "echo 'Login Success'; whoami; pwd"
 
+      # 5 Run Python Script
       - name: Run Python Script
         env:
           PASSWORD: ${{ secrets.PASSWORD }}
