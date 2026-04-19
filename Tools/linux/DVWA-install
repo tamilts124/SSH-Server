@@ -1,31 +1,40 @@
 #!/bin/bash
 
-set -e
+echo "========================================"
+echo "Installing DVWA (Damn Vulnerable Web Application)"
+echo "========================================"
 
-echo "Updating system..."
-sudo apt update
+echo "[1] Removing old container..."
+docker rm -f dvwa 2>/dev/null
 
-echo "Installing Docker..."
-sudo apt install -y docker.io
+echo "[2] Pulling latest DVWA image..."
+docker pull vulnerables/web-dvwa
 
-echo "Starting Docker..."
-sudo service docker start
-
-echo "Adding current user to docker group..."
-sudo usermod -aG docker $USER
-
-echo "Pulling DVWA container..."
-sudo docker pull vulnerables/web-dvwa
-
-echo "Removing old DVWA container if exists..."
-sudo docker rm -f dvwa 2>/dev/null || true
-
-echo "Starting DVWA on port 8001..."
-sudo docker run -d -p 8001:80 --name dvwa vulnerables/web-dvwa
+echo "[3] Starting DVWA container..."
+docker run -d \
+--name dvwa \
+-p 8001:80 \
+--restart unless-stopped \
+vulnerables/web-dvwa
 
 echo ""
-echo "DVWA is running:"
+echo "========================================"
+echo "DVWA Installed Successfully"
+echo "========================================"
+
+echo "Open in browser:"
 echo "http://localhost:8001"
+
 echo ""
-echo "Login:"
-echo "admin / password"
+echo "Setup database first:"
+echo "http://localhost:8001/setup.php"
+
+echo ""
+echo "Default Credentials:"
+echo "Username: admin"
+echo "Password: password"
+
+echo ""
+echo "After login set:"
+echo "DVWA Security -> LOW"
+echo ""
