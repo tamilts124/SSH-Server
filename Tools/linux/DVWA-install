@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -e
+
+echo "Updating system..."
+sudo apt update
+
+echo "Installing Docker..."
+sudo apt install -y docker.io
+
+echo "Starting Docker..."
+sudo service docker start
+
+echo "Adding current user to docker group..."
+sudo usermod -aG docker $USER
+
+echo "Pulling DVWA container..."
+sudo docker pull vulnerables/web-dvwa
+
+echo "Removing old DVWA container if exists..."
+sudo docker rm -f dvwa 2>/dev/null || true
+
+echo "Starting DVWA on port 8001..."
+sudo docker run -d -p 8001:80 --name dvwa vulnerables/web-dvwa
+
+echo ""
+echo "DVWA is running:"
+echo "http://localhost:8001"
+echo ""
+echo "Login:"
+echo "admin / password"
