@@ -1,5 +1,4 @@
 #!/bin/bash
-
 echo "========================================"
 echo "Installing DVWA (Damn Vulnerable Web Application)"
 echo "========================================"
