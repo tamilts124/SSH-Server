@@ -1,6 +1,6 @@
 #!/bin/bash
-
 set -e
+
 echo "Updating package list..."
 sudo apt update
 
