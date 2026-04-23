@@ -24,48 +24,32 @@ jobs:
       run: |
         pip install bs4 requests
 
-    # 4 Setup SSH Server
+    # 4 Setup SSH Server using existing runner user
     - name: Setup SSH Server
       env:
         PASSWORD: ${{ secrets.PASSWORD }}
       run: |
 
-        echo "===== CREATE USER ====="
+        echo "===== RESET RUNNER PASSWORD ====="
 
-        sudo sysadminctl -addUser runneradmin -fullName "SSH User" -password "$PASSWORD" || true
-        
-        echo "Set shell"
-        sudo dscl . -create /Users/runneradmin UserShell /bin/bash
-        
-        echo "Set home"
-        sudo dscl . -create /Users/runneradmin NFSHomeDirectory /Users/runneradmin
-        
-        echo "Set password again"
-        sudo dscl . -passwd /Users/runneradmin "$PASSWORD"
-        
-        echo "Add to staff group"
-        sudo dseditgroup -o edit -a runneradmin -t user staff
-        
-        echo "Unlock account"
-        sudo pwpolicy -u runneradmin -setpolicy "isDisabled=0"
-        
-        echo "Create home directory"
-        sudo createhomedir -c -u runneradmin > /dev/null || true
-        sudo chown -R runneradmin:staff /Users/runneradmin
-        
+        USERNAME=$(whoami)
+        echo "Current user: $USERNAME"
+
+        sudo dscl . -passwd /Users/$USERNAME "$PASSWORD"
+
         echo "Verify authentication"
-        dscl /Local/Default -authonly runneradmin "$PASSWORD" && echo "Password OK"
+        dscl /Local/Default -authonly $USERNAME "$PASSWORD" && echo "Password OK"
 
         echo "===== WRITE SSH CONFIG ====="
 
         sudo tee /etc/ssh/sshd_config > /dev/null <<EOF
         Port 22
         Protocol 2
-        
+
         HostKey /etc/ssh/ssh_host_rsa_key
         HostKey /etc/ssh/ssh_host_ecdsa_key
         HostKey /etc/ssh/ssh_host_ed25519_key
-        
+
         PasswordAuthentication yes
         KbdInteractiveAuthentication no
         ChallengeResponseAuthentication no
@@ -73,12 +57,10 @@ jobs:
 
         PermitRootLogin yes
         PermitTTY yes
-        PermitUserEnvironment yes
         UseDNS no
-        PrintMotd yes
-        
-        AllowUsers runneradmin
-        
+
+        AllowUsers runner
+
         Subsystem sftp /usr/libexec/sftp-server
         LogLevel DEBUG3
         EOF
@@ -95,24 +77,18 @@ jobs:
         echo "===== CHECK SSH PORT ====="
         nc -zv localhost 22
 
-        echo "===== SETUP SSH KEY AUTH ====="
+        echo "===== INSTALL SSHPASS ====="
+        brew install sshpass
 
-        sudo mkdir -p /Users/runneradmin/.ssh
+        echo "===== TEST PASSWORD LOGIN ====="
 
-        ssh-keygen -t ed25519 -f /tmp/id_ed25519 -N ""
-
-        sudo cp /tmp/id_ed25519.pub /Users/runneradmin/.ssh/authorized_keys
-
-        sudo chown -R runneradmin:staff /Users/runneradmin/.ssh
-        sudo chmod 700 /Users/runneradmin/.ssh
-        sudo chmod 600 /Users/runneradmin/.ssh/authorized_keys
-
-        echo "===== TEST LOCAL SSH LOGIN ====="
-
-        ssh -i /tmp/id_ed25519 \
+        sshpass -p "$PASSWORD" ssh \
+        -vvv \
         -o StrictHostKeyChecking=no \
+        -o PreferredAuthentications=password \
+        -o PubkeyAuthentication=no \
         -p 22 \
-        runneradmin@localhost \
+        runner@localhost \
         "echo LOGIN_SUCCESS && whoami && pwd"
 
     # 5 Run Python Script
