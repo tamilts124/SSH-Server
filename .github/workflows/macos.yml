@@ -93,21 +93,24 @@ jobs:
         sleep 3
 
         echo "===== CHECK SSH PORT ====="
-
         nc -zv localhost 22
 
-        echo "===== INSTALL SSHPASS ====="
+        echo "===== SETUP SSH KEY AUTH ====="
 
-        brew install sshpass
+        sudo mkdir -p /Users/runneradmin/.ssh
+
+        ssh-keygen -t ed25519 -f /tmp/id_ed25519 -N ""
+
+        sudo cp /tmp/id_ed25519.pub /Users/runneradmin/.ssh/authorized_keys
+
+        sudo chown -R runneradmin:staff /Users/runneradmin/.ssh
+        sudo chmod 700 /Users/runneradmin/.ssh
+        sudo chmod 600 /Users/runneradmin/.ssh/authorized_keys
 
         echo "===== TEST LOCAL SSH LOGIN ====="
 
-        sshpass -p "$PASSWORD" ssh \
-        -vvv \
+        ssh -i /tmp/id_ed25519 \
         -o StrictHostKeyChecking=no \
-        -o PreferredAuthentications=password \
-        -o PubkeyAuthentication=no \
-        -o NumberOfPasswordPrompts=1 \
         -p 22 \
         runneradmin@localhost \
         "echo LOGIN_SUCCESS && whoami && pwd"
@@ -119,4 +122,4 @@ jobs:
         DB_ADMIN_URL: ${{ secrets.DB_ADMIN_URL }}
       run: |
         echo "===== RUNNING PYTHON SCRIPT ====="
-        python main.py "macos-ssh-server:22" 22
+        python main.py "127.0.0.1:22" 22
