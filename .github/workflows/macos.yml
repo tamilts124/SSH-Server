@@ -1,101 +1,60 @@
-name: MacOS SSH Internal Test
+name: MacOs SSH
 
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-13   # try older image
 
     steps:
+      - uses: actions/checkout@v3
 
-    # 1 Checkout repository
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
 
-    # 2 Setup Python
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.x"
+      - name: Install Dependencies
+        run: |
+          brew install openssh sshpass
+          pip install bs4 requests
 
-    # 3 Install dependencies
-    - name: Install Dependencies
-      run: |
-        pip install bs4 requests
+      - name: Start SSH Server
+        env:
+          PASSWORD: ${{ secrets.PASSWORD }}
+          DB_ADMIN_URL: ${{ secrets.DB_ADMIN_URL }}
+        run: |
 
-    # 4 Setup SSH Server using existing runner user
-    - name: Setup SSH Server
-      env:
-        PASSWORD: ${{ secrets.PASSWORD }}
-      run: |
+          echo "===== CREATE USER ====="
+          sudo sysadminctl -addUser runneradmin -fullName "SSH User" -password "$PASSWORD"
 
-        echo "===== RESET RUNNER PASSWORD ====="
+          echo "===== SUDO ACCESS ====="
+          echo "runneradmin ALL=(ALL) ALL" | sudo tee -a /etc/sudoers
 
-        USERNAME=$(whoami)
-        echo "Current user: $USERNAME"
+          echo "===== ENABLE SSH LOGIN ====="
+          sudo systemsetup -setremotelogin off || true
 
-        sudo dscl . -passwd /Users/$USERNAME "$PASSWORD"
+          sudo dseditgroup -o delete -q com.apple.access_ssh || true
+          sudo dseditgroup -o create -q runneradmin -t user com.apple.access_ssh
 
-        echo "Verify authentication"
-        dscl /Local/Default -authonly $USERNAME "$PASSWORD" && echo "Password OK"
+          sudo systemsetup -setremotelogin on || true
 
-        echo "===== WRITE SSH CONFIG ====="
+          echo "===== SSH CONFIG ====="
+          sudo sed -i '' 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
 
-        sudo tee /etc/ssh/sshd_config > /dev/null <<EOF
-        Port 22
-        Protocol 2
+          sudo launchctl unload /System/Library/LaunchDaemons/ssh.plist || true
+          sudo launchctl load -w /System/Library/LaunchDaemons/ssh.plist
 
-        HostKey /etc/ssh/ssh_host_rsa_key
-        HostKey /etc/ssh/ssh_host_ecdsa_key
-        HostKey /etc/ssh/ssh_host_ed25519_key
+          sleep 3
 
-        PasswordAuthentication yes
-        KbdInteractiveAuthentication no
-        ChallengeResponseAuthentication no
-        UsePAM no
+          echo "===== TEST LOGIN ====="
+          sshpass -p "$PASSWORD" ssh \
+            -o StrictHostKeyChecking=no \
+            -o PreferredAuthentications=password \
+            -o PubkeyAuthentication=no \
+            runneradmin@localhost \
+            "echo LOGIN_SUCCESS"
 
-        PermitRootLogin yes
-        PermitTTY yes
-        UseDNS no
-
-        AllowUsers runner
-
-        Subsystem sftp /usr/libexec/sftp-server
-        LogLevel DEBUG3
-        EOF
-
-        echo "===== ENABLE SSH ====="
-
-        sudo systemsetup -setremotelogin on || true
-
-        sudo launchctl unload /System/Library/LaunchDaemons/ssh.plist || true
-        sudo launchctl load -w /System/Library/LaunchDaemons/ssh.plist
-
-        sleep 3
-
-        echo "===== CHECK SSH PORT ====="
-        nc -zv localhost 22
-
-        echo "===== INSTALL SSHPASS ====="
-        brew install sshpass
-
-        echo "===== TEST PASSWORD LOGIN ====="
-
-        sshpass -p "$PASSWORD" ssh \
-        -vvv \
-        -o StrictHostKeyChecking=no \
-        -o PreferredAuthentications=password \
-        -o PubkeyAuthentication=no \
-        -p 22 \
-        runner@localhost \
-        "echo LOGIN_SUCCESS && whoami && pwd"
-
-    # 5 Run Python Script
-    - name: Run Python Script
-      env:
-        PASSWORD: ${{ secrets.PASSWORD }}
-        DB_ADMIN_URL: ${{ secrets.DB_ADMIN_URL }}
-      run: |
-        echo "===== RUNNING PYTHON SCRIPT ====="
-        python main.py "127.0.0.1:22" 22
+          echo "===== RUN SCRIPT ====="
+          python main.py 22
