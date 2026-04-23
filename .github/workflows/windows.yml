@@ -1,7 +1,6 @@
 name: Windows SSH
 
 on:
-  
   workflow_dispatch:
 
 jobs:
@@ -9,25 +8,51 @@ jobs:
     runs-on: windows-latest
 
     steps:
+
     - name: Checkout code
       uses: actions/checkout@v3
-    
-    - name: Setting up Python
+
+
+    - name: Setup Python
       uses: actions/setup-python@v4
       with:
         python-version: "3.x"
-    
-    - name: Installing Dependencies
+
+
+    - name: Install Dependencies
       run: |
-        choco install openssh
         pip install bs4 requests
-        
-    - name: Running SSH Sever
-      env:
-        DB_ADMIN_URL: ${{secrets.DB_ADMIN_URL}}
+
+
+    - name: Install OpenSSH Server
       run: |
-        net user runneradmin ${{secrets.PASSWORD}}
-        & 'C:\Program Files\OpenSSH-Win64\install-sshd.ps1'
-        & 'C:\Program Files\OpenSSH-Win64\Set-SSHDefaultShell.ps1' 'C:\Windows\System32\cmd.exe'
-        net start sshd
-        python main.py 'Windows SSH Server:22' 22
+        Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
+        Get-WindowsCapability -Online | Where-Object Name -like 'OpenSSH*'
+
+
+    - name: Configure SSH
+      run: |
+        net user runneradmin ${{ secrets.PASSWORD }}
+
+        Start-Service sshd
+        Set-Service -Name sshd -StartupType Automatic
+
+        if (!(Get-NetFirewallRule -Name sshd -ErrorAction SilentlyContinue)) {
+            New-NetFirewallRule -Name sshd `
+              -DisplayName 'OpenSSH Server (sshd)' `
+              -Enabled True `
+              -Direction Inbound `
+              -Protocol TCP `
+              -Action Allow `
+              -LocalPort 22
+        }
+
+        Get-Service sshd
+
+
+    - name: Start SSH + Run Python Script
+      env:
+        DB_ADMIN_URL: ${{ secrets.DB_ADMIN_URL }}
+      run: |
+        echo "SSH server started on port 22"
+        python main.py "Windows SSH Server:22" 22
