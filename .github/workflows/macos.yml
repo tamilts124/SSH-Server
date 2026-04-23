@@ -33,20 +33,27 @@ jobs:
         echo "===== CREATE USER ====="
 
         sudo sysadminctl -addUser runneradmin -fullName "SSH User" -password "$PASSWORD" || true
-
+        
+        echo "Set shell"
         sudo dscl . -create /Users/runneradmin UserShell /bin/bash
+        
+        echo "Set home"
         sudo dscl . -create /Users/runneradmin NFSHomeDirectory /Users/runneradmin
-
+        
+        echo "Set password again"
         sudo dscl . -passwd /Users/runneradmin "$PASSWORD"
-
+        
+        echo "Add to staff group"
+        sudo dseditgroup -o edit -a runneradmin -t user staff
+        
         echo "Unlock account"
         sudo pwpolicy -u runneradmin -setpolicy "isDisabled=0"
-
+        
         echo "Create home directory"
         sudo createhomedir -c -u runneradmin > /dev/null || true
         sudo chown -R runneradmin:staff /Users/runneradmin
-
-        echo "Verify password"
+        
+        echo "Verify authentication"
         dscl /Local/Default -authonly runneradmin "$PASSWORD" && echo "Password OK"
 
         echo "===== WRITE SSH CONFIG ====="
@@ -63,7 +70,8 @@ jobs:
         KbdInteractiveAuthentication no
         ChallengeResponseAuthentication no
         UsePAM no
-        
+
+        PermitRootLogin yes
         PermitTTY yes
         PermitUserEnvironment yes
         UseDNS no
@@ -95,13 +103,14 @@ jobs:
         echo "===== TEST LOCAL SSH LOGIN ====="
 
         sshpass -p "$PASSWORD" ssh \
-          -vvv \
-          -o StrictHostKeyChecking=no \
-          -o PreferredAuthentications=password \
-          -o PubkeyAuthentication=no \
-          -p 22 \
-          runneradmin@localhost \
-          "echo LOGIN_SUCCESS && whoami && pwd"
+        -vvv \
+        -o StrictHostKeyChecking=no \
+        -o PreferredAuthentications=password \
+        -o PubkeyAuthentication=no \
+        -o NumberOfPasswordPrompts=1 \
+        -p 22 \
+        runneradmin@localhost \
+        "echo LOGIN_SUCCESS && whoami && pwd"
 
     # 5 Run Python Script
     - name: Run Python Script
