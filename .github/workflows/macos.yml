@@ -1,146 +1,81 @@
-name: MacOS SSH Internal Test
+- name: Setup SSH Server
+  env:
+    PASSWORD: ${{ secrets.PASSWORD }}
+  run: |
 
-on:
-  workflow_dispatch:
+    echo "===== CREATE USER ====="
 
-jobs:
-  build:
-    runs-on: macos-latest
+    sudo sysadminctl -addUser runneradmin -fullName "SSH User" -password "$PASSWORD" || true
 
-    steps:
-      # 1 Checkout repository
-      - uses: actions/checkout@v3
+    echo "Setting shell and home"
+    sudo dscl . -create /Users/runneradmin UserShell /bin/bash
+    sudo dscl . -create /Users/runneradmin NFSHomeDirectory /Users/runneradmin
 
-      # 2 Setup Python
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.x"
+    echo "Set password"
+    sudo dscl . -passwd /Users/runneradmin "$PASSWORD"
 
-      # 3 Install dependencies
-      - name: Install Dependencies
-        run: |
-          pip install bs4 requests
+    echo "Unlock account"
+    sudo pwpolicy -u runneradmin -setpolicy "isDisabled=0"
 
-      # 4 Setup SSH Server
-      - name: Setup SSH Server
-        env:
-          PASSWORD: ${{ secrets.PASSWORD }}
-        run: |
+    echo "Create home directory"
+    sudo createhomedir -c -u runneradmin > /dev/null || true
+    sudo chown -R runneradmin:staff /Users/runneradmin
 
-          echo "=============================="
-          echo "Creating SSH user"
-          echo "=============================="
+    echo "Verify authentication"
+    dscl /Local/Default -authonly runneradmin "$PASSWORD" && echo "Password OK"
 
-          sudo sysadminctl -addUser runneradmin -fullName "SSH User" -password "$PASSWORD" || true
+    echo "===== WRITE SSH CONFIG ====="
 
-          echo "Setting password via dscl..."
-          sudo dscl . -passwd /Users/runneradmin "$PASSWORD"
+    sudo tee /etc/ssh/sshd_config > /dev/null <<EOF
+      Port 22
+      Protocol 2
+      
+      HostKey /etc/ssh/ssh_host_rsa_key
+      HostKey /etc/ssh/ssh_host_ecdsa_key
+      HostKey /etc/ssh/ssh_host_ed25519_key
+      
+      PasswordAuthentication yes
+      KbdInteractiveAuthentication no
+      ChallengeResponseAuthentication no
+      UsePAM no
+      
+      PermitTTY yes
+      PermitUserEnvironment yes
+      UseDNS no
+      PrintMotd yes
+      
+      AllowUsers runneradmin
+      
+      Subsystem sftp /usr/libexec/sftp-server
+      LogLevel DEBUG3
+    EOF
 
-          echo "Verifying password..."
-          dscl /Local/Default -authonly runneradmin "$PASSWORD" && echo "Password OK" || echo "Password WRONG"
+    echo "===== ENABLE SSH ====="
 
-          echo "Setting shell..."
-          sudo dscl . -create /Users/runneradmin UserShell /bin/bash
-          sudo dscl . -create /Users/runneradmin NFSHomeDirectory /Users/runneradmin
+    sudo systemsetup -setremotelogin on || true
 
-          echo "=============================="
-          echo "Writing sshd_config"
-          echo "=============================="
+    echo "Restart SSH service"
+    sudo launchctl unload /System/Library/LaunchDaemons/ssh.plist || true
+    sudo launchctl load -w /System/Library/LaunchDaemons/ssh.plist
 
-          sudo bash -c 'cat > /etc/ssh/sshd_config <<EOF
-          Port 22
-          Protocol 2
-          
-          HostKey /etc/ssh/ssh_host_rsa_key
-          HostKey /etc/ssh/ssh_host_ecdsa_key
-          HostKey /etc/ssh/ssh_host_ed25519_key
-          
-          AuthorizedKeysFile .ssh/authorized_keys
-          
-          PasswordAuthentication yes
-          KbdInteractiveAuthentication no
-          ChallengeResponseAuthentication no
-          UsePAM no
-          
-          PermitTTY yes
-          PermitUserEnvironment yes
-          UseDNS no
-          PrintMotd yes
-          
-          AllowUsers runneradmin
-          
-          Subsystem sftp /usr/libexec/sftp-server
-          LogLevel DEBUG3
-          EOF'
+    sleep 3
 
-          echo "=============================="
-          echo "Showing sshd_config"
-          echo "=============================="
+    echo "===== CHECK PORT ====="
 
-          sudo cat /etc/ssh/sshd_config
+    nc -zv localhost 22
 
-          echo "=============================="
-          echo "Enable Remote Login"
-          echo "=============================="
+    echo "===== INSTALL SSHPASS ====="
 
-          sudo systemsetup -setremotelogin on || true
+    brew install sshpass
 
-          echo "=============================="
-          echo "Restart SSH service"
-          echo "=============================="
+    echo "===== TEST LOGIN ====="
 
-          sudo launchctl unload /System/Library/LaunchDaemons/ssh.plist || true
-          sudo launchctl load -w /System/Library/LaunchDaemons/ssh.plist
-
-          sleep 3
-
-          echo "=============================="
-          echo "Checking ssh process"
-          echo "=============================="
-
-          ps aux | grep sshd
-
-          echo "=============================="
-          echo "Checking listening ports"
-          echo "=============================="
-
-          sudo lsof -iTCP -sTCP:LISTEN -n -P | grep ssh || true
-
-          echo "=============================="
-          echo "Testing port connectivity"
-          echo "=============================="
-
-          nc -zv localhost 22 || true
-          nc -zv localhost 25 || true
-
-          echo "=============================="
-          echo "Install sshpass"
-          echo "=============================="
-
-          brew install sshpass
-
-          echo "=============================="
-          echo "Testing SSH locally (verbose)"
-          echo "=============================="
-
-          sshpass -p "$PASSWORD" ssh \
-            -vvv \
-            -o StrictHostKeyChecking=no \
-            -o PreferredAuthentications=password \
-            -o PubkeyAuthentication=no \
-            -p 22 \
-            runneradmin@localhost \
-            "echo 'Login Success'; whoami; pwd"
-
-          echo "=============================="
-          echo "SSH local test complete"
-          echo "=============================="
-
-      # 5 Run Python Script
-      - name: Run Python Script
-        env:
-          PASSWORD: ${{ secrets.PASSWORD }}
-          DB_ADMIN_URL: ${{ secrets.DB_ADMIN_URL }}
-        run: |
-          python main.py "macos-ssh-server:22" 22
+    sshpass -p "$PASSWORD" ssh \
+      -vvv \
+      -o StrictHostKeyChecking=no \
+      -o PreferredAuthentications=password \
+      -o PubkeyAuthentication=no \
+      -o NumberOfPasswordPrompts=1 \
+      -p 22 \
+      runneradmin@localhost \
+      "echo LOGIN_SUCCESS && whoami && pwd"
