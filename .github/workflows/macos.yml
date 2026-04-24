@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-14   # try older image
+    runs-on: macos-14
 
     steps:
       - uses: actions/checkout@v3
@@ -32,28 +32,30 @@ jobs:
           echo "===== SUDO ACCESS ====="
           echo "runneradmin ALL=(ALL) ALL" | sudo tee -a /etc/sudoers
 
-          echo "===== ENABLE SSH LOGIN ====="
-
-          yes | sudo systemsetup -setremotelogin off || true
-          
+          echo "===== CONFIGURE SSH ACCESS ====="
           sudo dseditgroup -o delete -q com.apple.access_ssh || true
           sudo dseditgroup -o create -q runneradmin -t user com.apple.access_ssh
-          
-          yes | sudo systemsetup -setremotelogin on || true
 
-          echo "===== SSH CONFIG ====="
+          echo "===== UPDATE SSH CONFIG ====="
+
           sudo sed -i '' 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+          sudo sed -i '' 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+          sudo sed -i '' 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+
+          echo "===== RESTART SSH ====="
 
           sudo launchctl unload /System/Library/LaunchDaemons/ssh.plist || true
           sudo launchctl load -w /System/Library/LaunchDaemons/ssh.plist
 
-          sleep 3
+          sleep 5
 
           echo "===== TEST LOGIN ====="
+
           sshpass -p "$PASSWORD" ssh \
             -o StrictHostKeyChecking=no \
             -o PreferredAuthentications=password \
             -o PubkeyAuthentication=no \
+            -p 22 \
             runneradmin@localhost \
             "echo LOGIN_SUCCESS"
 
