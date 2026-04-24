@@ -33,12 +33,13 @@ jobs:
           echo "runneradmin ALL=(ALL) ALL" | sudo tee -a /etc/sudoers
 
           echo "===== ENABLE SSH LOGIN ====="
-          sudo systemsetup -setremotelogin off || true
 
+          yes | sudo systemsetup -setremotelogin off || true
+          
           sudo dseditgroup -o delete -q com.apple.access_ssh || true
           sudo dseditgroup -o create -q runneradmin -t user com.apple.access_ssh
-
-          sudo systemsetup -setremotelogin on || true
+          
+          yes | sudo systemsetup -setremotelogin on || true
 
           echo "===== SSH CONFIG ====="
           sudo sed -i '' 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
