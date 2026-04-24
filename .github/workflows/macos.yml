@@ -60,4 +60,4 @@ jobs:
             "echo LOGIN_SUCCESS"
 
           echo "===== RUN SCRIPT ====="
-          python main.py 22 "macos ssh 22"
+          python main.py "macos-ssh-server:22" 22
