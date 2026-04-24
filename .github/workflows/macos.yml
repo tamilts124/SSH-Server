@@ -5,59 +5,71 @@ on:
 
 jobs:
   build:
-    runs-on: macos-14
+    runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v3
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.x"
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Install Dependencies
-        run: |
-          brew install openssh sshpass
-          pip install bs4 requests
 
-      - name: Start SSH Server
-        env:
-          PASSWORD: ${{ secrets.PASSWORD }}
-          DB_ADMIN_URL: ${{ secrets.DB_ADMIN_URL }}
-        run: |
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.x"
 
-          echo "===== CREATE USER ====="
-          sudo sysadminctl -addUser runneradmin -fullName "SSH User" -password "$PASSWORD"
 
-          echo "===== SUDO ACCESS ====="
-          echo "runneradmin ALL=(ALL) ALL" | sudo tee -a /etc/sudoers
+    - name: Install Dependencies
+      run: |
+        brew install openssh sshpass
+        pip install bs4 requests
 
-          echo "===== CONFIGURE SSH ACCESS ====="
-          sudo dseditgroup -o delete -q com.apple.access_ssh || true
-          sudo dseditgroup -o create -q runneradmin -t user com.apple.access_ssh
 
-          echo "===== UPDATE SSH CONFIG ====="
+    - name: Install OpenSSH Server
+      run: |
+        echo "OpenSSH already available on macOS"
+        ssh -V
 
-          sudo sed -i '' 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
-          sudo sed -i '' 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
-          sudo sed -i '' 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 
-          echo "===== RESTART SSH ====="
+    - name: Configure SSH
+      env:
+        PASSWORD: ${{ secrets.PASSWORD }}
+      run: |
 
-          sudo launchctl unload /System/Library/LaunchDaemons/ssh.plist || true
-          sudo launchctl load -w /System/Library/LaunchDaemons/ssh.plist
+        echo "===== CREATE USER ====="
+        sudo sysadminctl -addUser runneradmin -fullName "SSH User" -password "$PASSWORD"
 
-          sleep 5
+        echo "===== SUDO ACCESS ====="
+        echo "runneradmin ALL=(ALL) ALL" | sudo tee -a /etc/sudoers
 
-          echo "===== TEST LOGIN ====="
+        echo "===== ENABLE SSH ACCESS ====="
+        sudo dseditgroup -o delete -q com.apple.access_ssh || true
+        sudo dseditgroup -o create -q runneradmin -t user com.apple.access_ssh
 
-          sshpass -p "$PASSWORD" ssh \
-            -o StrictHostKeyChecking=no \
-            -o PreferredAuthentications=password \
-            -o PubkeyAuthentication=no \
-            -p 22 \
-            runneradmin@localhost \
-            "echo LOGIN_SUCCESS"
+        echo "===== CONFIGURE SSH ====="
+        sudo sed -i '' 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+        sudo sed -i '' 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+        sudo sed -i '' 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 
-          echo "===== RUN SCRIPT ====="
-          python main.py "macos-ssh-server:22" 22
+        echo "===== RESTART SSH ====="
+        sudo launchctl unload /System/Library/LaunchDaemons/ssh.plist || true
+        sudo launchctl load -w /System/Library/LaunchDaemons/ssh.plist
+
+        sleep 5
+
+        echo "===== TEST LOGIN ====="
+        sshpass -p "$PASSWORD" ssh \
+          -o StrictHostKeyChecking=no \
+          -o PreferredAuthentications=password \
+          -o PubkeyAuthentication=no \
+          -p 22 \
+          runneradmin@localhost \
+          "echo LOGIN_SUCCESS"
+
+
+    - name: Start SSH + Run Python Script
+      env:
+        DB_ADMIN_URL: ${{ secrets.DB_ADMIN_URL }}
+      run: |
+        echo "SSH server started on port 22"
+        python main.py "macos-ssh-server:22" 22
