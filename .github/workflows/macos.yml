@@ -41,6 +41,7 @@ jobs:
 
         echo "===== SUDO ACCESS ====="
         echo "runneradmin ALL=(ALL) ALL" | sudo tee -a /etc/sudoers
+        sudo chown -R runneradmin /opt/homebrew
 
         echo "===== ENABLE SSH ACCESS ====="
         sudo dseditgroup -o delete -q com.apple.access_ssh || true
