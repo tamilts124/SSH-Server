@@ -1,4 +1,4 @@
-name: MacOs SSH
+name: Take Screenshot
 
 on:
   workflow_dispatch:
