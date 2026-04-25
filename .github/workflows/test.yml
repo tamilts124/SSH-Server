@@ -1,0 +1,30 @@
+name: MacOs SSH
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.x"
+
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install bs4 requests pynput pyautogui pillow pyperclip
+
+    - name: Run Python Script
+      run: |
+        echo "Taking screenshot of screen"
+        $output = & python takescreenshoot.py ${{secrets.FREE_IMAGEKEY}}
+        Write-Host "Screenshot: $output"
