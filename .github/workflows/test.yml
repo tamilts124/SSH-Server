@@ -26,5 +26,5 @@ jobs:
     - name: Run Python Script
       run: |
         echo "Taking screenshot of screen"
-        $output = & python takescreenshoot.py ${{secrets.FREE_IMAGEKEY}}
-        Write-Host "Screenshot: $output"
+        output=$(python takescreenshoot.py ${{secrets.FREE_IMAGEKEY}})
+        echo "Screenshot: $output"
