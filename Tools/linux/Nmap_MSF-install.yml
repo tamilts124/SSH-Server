@@ -1,0 +1,47 @@
+#!/bin/bash
+
+set -e
+
+echo "======================================"
+echo "   KALI TOOL INSTALLER (NMAP + MSF)   "
+echo "======================================"
+
+# update system
+echo "[1] Updating package list..."
+sudo apt update
+
+echo "[2] Upgrading system..."
+sudo apt upgrade -y
+
+# install nmap
+echo "[3] Installing Nmap..."
+sudo apt install -y nmap
+
+# install metasploit
+echo "[4] Installing Metasploit Framework..."
+sudo apt install -y metasploit-framework
+
+# initialize metasploit DB
+echo "[5] Initializing Metasploit database..."
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+
+msfdb init || true
+
+echo ""
+echo "======================================"
+echo " Installation Complete "
+echo "======================================"
+
+echo "Check versions:"
+echo "Nmap:"
+nmap --version
+
+echo ""
+echo "Metasploit:"
+msfconsole --version
+
+echo ""
+echo "Run tools using:"
+echo "nmap -sV <target>"
+echo "msfconsole"
