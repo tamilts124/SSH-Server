@@ -46,7 +46,7 @@ msfconsole --version
 
 echo ""
 echo "Verifying DB connection..."
-echo "exit" | msfconsole | grep "Connected" || echo "DB not connected"
+sudo msfdb status
 
 echo ""
 echo "Run tools using:"
