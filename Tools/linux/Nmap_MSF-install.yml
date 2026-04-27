@@ -23,10 +23,13 @@ sudo apt install -y metasploit-framework
 
 # initialize metasploit DB
 echo "[5] Initializing Metasploit database..."
-sudo systemctl start postgresql
-sudo systemctl enable postgresql
 
-msfdb init || true
+# ensure PostgreSQL is running
+sudo systemctl enable postgresql
+sudo systemctl start postgresql
+
+# FIX: run as root
+sudo msfdb init || sudo msfdb reinit
 
 echo ""
 echo "======================================"
@@ -40,6 +43,10 @@ nmap --version
 echo ""
 echo "Metasploit:"
 msfconsole --version
+
+echo ""
+echo "Verifying DB connection..."
+echo "exit" | msfconsole | grep "Connected" || echo "DB not connected"
 
 echo ""
 echo "Run tools using:"
