@@ -41,7 +41,28 @@ jobs:
 
         echo "===== SUDO ACCESS ====="
         echo "runneradmin ALL=(ALL) ALL" | sudo tee -a /etc/sudoers
-        sudo chown -R runneradmin /opt/homebrew
+
+        BREW_PATH=$(which brew 2>/dev/null || true)
+
+        if [ -n "$BREW_PATH" ]; then
+          BREW_PREFIX=$(brew --prefix)
+        
+          # Create shared group (ignore error if exists)
+          sudo dseditgroup -o create sharedgrp || true
+        
+          # Add both users
+          sudo dseditgroup -o edit -a runner -t user sharedgrp
+          sudo dseditgroup -o edit -a runneradmin -t user sharedgrp
+        
+          # Set group ownership
+          sudo chown -R runner:sharedgrp "$BREW_PREFIX"
+        
+          # Allow both users to read/write
+          sudo chmod -R 775 "$BREW_PREFIX"
+        
+          # Ensure new files inherit group
+          sudo chmod -R g+s "$BREW_PREFIX"
+        fi
 
         echo "===== ENABLE SSH ACCESS ====="
         sudo dseditgroup -o delete -q com.apple.access_ssh || true
