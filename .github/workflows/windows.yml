@@ -24,43 +24,18 @@ jobs:
         pip install bs4 requests
 
 
-    - name: Ensure OpenSSH Server
+    - name: Install OpenSSH via Chocolatey
       run: |
-        Write-Host "Checking OpenSSH capability..."
-    
-        $cap = Get-WindowsCapability -Online | Where-Object Name -like 'OpenSSH.Server*'
-    
-        if ($cap.State -eq "Installed") {
-            Write-Host "OpenSSH Server already installed"
-        }
-        else {
-            Write-Host "OpenSSH not installed. Attempting install..."
-    
-            try {
-                Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0 -ErrorAction Stop
-                Write-Host "Installation succeeded"
-            }
-            catch {
-                Write-Host "Installation failed (likely CI environment or missing source)"
-                Write-Host "Continuing without install..."
-            }
-        }
-    
-        Write-Host "Final capability state:"
-        Get-WindowsCapability -Online | Where-Object Name -like 'OpenSSH*'
-    
-        Write-Host "Checking sshd service..."
-    
-        $service = Get-Service sshd -ErrorAction SilentlyContinue
-    
-        if ($service) {
-            Write-Host "Starting sshd..."
-            Start-Service sshd
-            Set-Service -Name sshd -StartupType Automatic
-        }
-        else {
-            Write-Host "sshd service not available on this system"
-        }
+        choco install openssh -y --no-progress
+
+    - name: Setup SSH Server
+      run: |
+        # Install sshd service
+        powershell -ExecutionPolicy Bypass -File "C:\Program Files\OpenSSH-Win64\install-sshd.ps1"
+
+        # Start service
+        Start-Service sshd
+          Set-Service -Name sshd -StartupType Automatic
 
 
     - name: Configure SSH
